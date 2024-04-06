@@ -1,1 +1,1 @@
-# nss_app
+# App to Manage NSS Events
