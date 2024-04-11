@@ -34,5 +34,3 @@ class User(models.Model):
     contact = models.CharField(max_length=15)
     blood_group = models.CharField(max_length=3, choices=BLOOD_GROUP_CHOICES)
     address = models.ForeignKey(Address, on_delete=models.CASCADE)
-
-
