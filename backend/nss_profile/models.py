@@ -1,5 +1,4 @@
 from django.db import models
-from 
 
 class Address(models.Model):
     street = models.CharField(max_length=50)
