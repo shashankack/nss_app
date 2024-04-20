@@ -10,7 +10,7 @@ services:
     depends_on:
       - db
     environment:
-      - POSTGRES_DB=postgres
+      - POSTGRES_DB=nss
       - POSTGRES_USER=postgres
       - POSTGRES_PASSWORD=password
     volumes:

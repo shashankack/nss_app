@@ -40,6 +40,7 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'rest_framework',
     'rest_framework_simplejwt',
+    'nss_profile'
 ]
 
 REST_FRAMEWORK = {
@@ -60,6 +61,8 @@ MIDDLEWARE = [
 ]
 
 ROOT_URLCONF = 'api.urls'
+
+AUTH_USER_MODEL = 'nss_profile.User'
 
 TEMPLATES = [
     {
