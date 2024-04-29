@@ -67,3 +67,4 @@ class VolunteerProfile(models.Model):
     course = models.ForeignKey(CollegeCourses, on_delete=models.CASCADE) #Doubt
     volunteering_year = models.CharField(max_length=9)
     role = models.CharField(max_length=20, choices=ROLE_CHOICES, default='Volunteer')
+

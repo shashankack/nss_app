@@ -6,46 +6,12 @@ from .serializers import VolunteerProfileSerializer, UserSerializer
 from rest_framework.permissions import IsAuthenticated
 from django.contrib.auth.hashers import make_password
 
-""" 
-class VolunteerAPIView(APIView):
-    def get(self, request, pk=None):
-        volunteers = VolunteerProfile.objects.all()
-        serializer = VolunteerProfileSerializer(volunteers, many=True)
-        return Response(serializer.data, status=status.HTTP_200_OK)
-
-    #def get(self, request, pk):
-    #    volunteer = VolunteerProfile.objects.get(id=pk)
-    #    serializer = VolunteerProfileSerializer(volunteer)
-    #    return Response(serializer.data, status=status.HTTP_200_OK)
-    
-    def post(self, request):
-        serializer = VolunteerProfileSerializer(data=request.data)
-        if serializer.is_valid():
-            serializer.save()
-            return Response(serializer.data, status=status.HTTP_200_OK)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-
-class UserAPIView(APIView):
-    def post(self, request):
-        serializer = UserSerializer(data=request.data)
-        if serializer.is_valid():
-            serializer.save()
-            return Response(serializer.data, status=status.HTTP_200_OK)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-    
-    def get(self, request, pk=None):
-        users = User.objects.all()
-        serializer = UserSerializer(users, many=True)
-        return Response(serializer.data, status=status.HTTP_200_OK)
- """
-
-
 
 class ListVolunteerAPIView(APIView):
-    permission_classes = [IsAuthenticated]
-    def get(self, request, volunteer_id = None):
-        if volunteer_id is not None:
-            volunteer = VolunteerProfile.objects.filter(id=volunteer_id).first()
+    #permission_classes = [IsAuthenticated]
+    def get(self, request, pk = None):
+        if pk is not None:
+            volunteer = VolunteerProfile.objects.filter(pk=pk).first()
             if volunteer:
                 serializer = VolunteerProfileSerializer(volunteer)
                 return Response(serializer.data, status=status.HTTP_200_OK)
@@ -59,13 +25,13 @@ class ListVolunteerAPIView(APIView):
         
 
 class CreateVolunteerAPIView(APIView):
-    permission_classes = [IsAuthenticated]
+    #permission_classes = [IsAuthenticated]
     def post(self, request):
         data = request.data
         user_data = data.get('user')
     
-        if user_data is None or (not isinstance(user_data, dict) and not isinstance(user_data, int)):
-            return Response("Invalid user data", status=status.HTTP_400_BAD_REQUEST)
+        if user_data is None:
+            return Response("User data is required", status=status.HTTP_400_BAD_REQUEST)
     
         if isinstance(user_data, dict):
             serializer = UserSerializer(data=user_data)
@@ -79,9 +45,11 @@ class CreateVolunteerAPIView(APIView):
                 return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
             
         else:
-            user = User.objects.filter(pk=user).first()
+            user_id = user_data
+            user = User.objects.filter(pk=user_id).first()
             if not user:
                 return Response("User does not exist", status=status.HTTP_400_BAD_REQUEST)
+            data['user'] = user.id
             
         serializer = VolunteerProfileSerializer(data=data)
         if serializer.is_valid():
@@ -99,3 +67,32 @@ class DeleteVolunteerAPIView(APIView):
         
         volunteer.delete()
         return Response("Volunteer deleted successfully", status=status.HTTP_204_NO_CONTENT)
+    
+class UpdateVolunteerAPIView(APIView):
+    def put(self, request, pk):
+        volunteer = VolunteerProfile.objects.filter(pk=pk).first()
+        if not volunteer:
+            return Response("Volunteer does not exist", status=status.HTTP_404_NOT_FOUND)
+        
+        serializer = VolunteerProfileSerializer(data=request.data, partial=True)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_200_OK)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    
+class ListUserAPIView(APIView):
+    #permission_classes = [IsAuthenticated]
+    def get(self, request, pk = None):
+        if pk is not None:
+            user = User.objects.filter(pk=pk).first()
+            if user:
+                serializer = UserSerializer(user)
+                return Response(serializer.data, status=status.HTTP_200_OK)
+            else:
+                return Response("User does not exist", status=status.HTTP_404_NOT_FOUND)
+            
+        else:
+            users = User.objects.all()
+            serializer = UserSerializer(users, many=True)
+            return Response(serializer.data, status=status.HTTP_200_OK)
+        
