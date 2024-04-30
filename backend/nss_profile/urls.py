@@ -13,7 +13,7 @@ urlpatterns = [
     path('volunteer/view/<int:pk>/', ListVolunteerAPIView.as_view()),
     path('volunteer/create/', CreateVolunteerAPIView.as_view()),
     path('volunteer/delete/<int:pk>/', DeleteVolunteerAPIView.as_view()),
-    path('volunteer/delete/<int:pk>/', UpdateVolunteerAPIView.as_view()),
+    path('volunteer/update/<int:pk>/', UpdateVolunteerAPIView.as_view()),
 
     path('user/view/', ListUserAPIView.as_view()),
     path('user/view/<int:pk>/', ListUserAPIView.as_view()),

@@ -26,7 +26,7 @@ class Events(models.Model):
     postponed_date = models.DateField(auto_now=False, auto_now_add=False, blank=True, null=True)
     postponed_time = models.TimeField(auto_now=False, auto_now_add=False, blank=True, null=True)
     is_cancelled = models.BooleanField(default=False)
-    credit_score = models.IntegerField()
+    credit_score = models.IntegerField(null=True)
 
 class Attendance(models.Model):
     class Meta:

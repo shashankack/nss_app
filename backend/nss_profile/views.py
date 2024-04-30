@@ -25,7 +25,7 @@ class ListVolunteerAPIView(APIView):
         
 
 class CreateVolunteerAPIView(APIView):
-    #permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticated]
     def post(self, request):
         data = request.data
         user_data = data.get('user')
@@ -54,7 +54,7 @@ class CreateVolunteerAPIView(APIView):
         serializer = VolunteerProfileSerializer(data=data)
         if serializer.is_valid():
             serializer.save()
-            return Response(serializer.data, status=status.HTTP_201_CREATED)
+            return Response("Volunteer has been created", status=status.HTTP_201_CREATED)
         else:
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)      
 

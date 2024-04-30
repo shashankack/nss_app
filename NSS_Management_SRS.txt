@@ -75,7 +75,7 @@ The NSS Management Web Application shall be developed using the following techno
 - JWT: JSON Web Token
 - HTTPS: Hypertext Transfer Protocol Secure
 - API: Application Programming Interface
-- CSV: Comma-Separated Values
+- CSV: Comma-Separated Values   
 
 
 ## 7. Conclusion
