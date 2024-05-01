@@ -42,13 +42,12 @@ body {
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  box-shadow: 0 0 20px 6px rgba(1, 216, 249, 0.85);
-  width: 35%; /* Adjusted width */
-  height: 85%;
-  opacity: 0.9; /* Adjust the opacity as needed */
+  box-shadow: 0 0 20px 6px rgba(0, 0, 0, 0.85);
+  width: 60%; /* Adjusted width */
+  height: 50%;
+  opacity: 90%; /* Adjust the opacity as needed */
+  filter: blur(2px);
 }
-
-
 
 
 .left {
@@ -57,11 +56,12 @@ body {
   color: #2406e3;
   background-size: cover;
   background-repeat: no-repeat;
-  background-image: url("https://img.freepik.com/premium-vector/profile-avatar-ui-element-template_106317-35807.jpg");
+  background-image: url("./nss-logo.jpg");
   overflow: hidden;
   background-position: center; /* Center the background image */
   height: 25%;
   opacity: 0.8; /* Adjust the opacity as needed */
+  
 }
 
 
