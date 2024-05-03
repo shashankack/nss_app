@@ -28,6 +28,7 @@ const LoginPage = () => {
               <input
                 type="text"
                 placeholder="Username"
+                autoComplete='off'
                 style={{
                   padding: '12px',
                   marginBottom: '15px',
@@ -41,6 +42,7 @@ const LoginPage = () => {
               <input
                 type="password"
                 placeholder="Password"
+                autoComplete='off'
                 style={{
                   padding: '12px',
                   marginBottom: '15px',

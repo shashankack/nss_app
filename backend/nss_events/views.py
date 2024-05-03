@@ -6,15 +6,19 @@ from .serializers import EventSerializer, AttendanceSerializer
 from .models import Events, Attendance
 from django.utils import timezone
 from datetime import datetime
+from nss_profile.permissions import IsCollegeAdmin
+from rest_framework.exceptions import PermissionDenied
+from rest_framework.permissions import IsAuthenticated
+
 
 class EventAPIView(APIView):
-    #permission_classes = [IsAuthenticated]
-    def get(self, request):
+    permission_classes = [IsCollegeAdmin]
+    def get(self, request):      
         events = Events.objects.all()
         serializer = EventSerializer(events, many=True)
         return Response(serializer.data, status=status.HTTP_200_OK)
     
-    def post(self, request):
+    def post(self, request):        
         data = request.data
         start_date_str = data.get('start_date')
         start_time_str = data.get('start_time')
@@ -38,6 +42,7 @@ class EventAPIView(APIView):
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
     
 class EventDetailAPIView(APIView):
+    permission_classes = [IsAuthenticated]
     def get_event(self, pk):
         event = Events.objects.filter(pk=pk).first()
         if not event:
@@ -62,10 +67,12 @@ class EventDetailAPIView(APIView):
         event.delete()
         return Response("Event deleted", status=status.HTTP_204_NO_CONTENT)
     
+
 class AttendanceAPIView(APIView):
     def get(self, request, pk = None):
+        event_id = pk
         if pk is not None:
-            attendance = Attendance.objects.filter(pk=pk).first()
+            attendance = Attendance.objects.filter(event_id=event_id).first()
             if attendance:
                 serializer = AttendanceSerializer(attendance)
                 return Response(serializer.data, status=status.HTTP_200_OK)
@@ -78,10 +85,27 @@ class AttendanceAPIView(APIView):
             return Response(serializer.data, status=status.HTTP_200_OK)
         
     def post(self, request):
-        pass
+        serializer = AttendanceSerializer(data=request.data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response("Attendance created", status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
     def put(self, request, pk):
-        pass
+        attendance = Attendance.objects.filter(pk=pk).first()
+        if not attendance:
+            return Response("Attendance record not found.", status=status.HTTP_404_NOT_FOUND)
+        
+        serializer = AttendanceSerializer(attendance, data=request.data, partial=True)
+        if serializer.is_valid():
+            serializer.save()
+            return Response("Attendance has been updated", status=status.HTTP_200_OK)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-    def delete(self, pk):
-        pass
+    def delete(self, request, pk):
+        attendance = Attendance.objects.filter(pk=pk).first()
+        if not attendance:
+            return Response("Attendance record not found", status=status.HTTP_404_NOT_FOUND)
+        
+        attendance.delete()
+        return Response("Attendance record has been deleted", status=status.HTTP_204_NO_CONTENT)
