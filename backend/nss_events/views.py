@@ -2,17 +2,15 @@ from rest_framework.response import Response
 from rest_framework import status
 from rest_framework.views import APIView
 from rest_framework.permissions import IsAuthenticated
-from .serializers import EventSerializer, AttendanceSerializer
+from nss_profile.permissions import IsCollegeAdmin
+from .serializers import EventSerializer, AttendanceSerializer, EventDetailSerializer
 from .models import Events, Attendance
 from django.utils import timezone
 from datetime import datetime
-from nss_profile.permissions import IsCollegeAdmin
-from rest_framework.exceptions import PermissionDenied
-from rest_framework.permissions import IsAuthenticated
 
 
 class EventAPIView(APIView):
-    permission_classes = [IsCollegeAdmin]
+    #permission_classes = [IsAuthenticated]
     def get(self, request):      
         events = Events.objects.all()
         serializer = EventSerializer(events, many=True)
@@ -41,19 +39,6 @@ class EventAPIView(APIView):
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
     
-class EventDetailAPIView(APIView):
-    permission_classes = [IsAuthenticated]
-    def get_event(self, pk):
-        event = Events.objects.filter(pk=pk).first()
-        if not event:
-            return Response("Event does not exist", status=status.HTTP_404_NOT_FOUND)
-        return event
-    
-    def get(self, request, pk):
-        event = self.get_event(pk)
-        serializer = EventSerializer(event)
-        return Response(serializer.data, status=status.HTTP_200_OK)
-    
     def put(self, request, pk):
         event = self.get_event(pk)
         serializer = EventSerializer(event, data=request.data, partial=True)
@@ -67,8 +52,19 @@ class EventDetailAPIView(APIView):
         event.delete()
         return Response("Event deleted", status=status.HTTP_204_NO_CONTENT)
     
+class EventDetailAPIView(APIView):
+    #permission_classes = [IsAuthenticated]    
+    def get(self, request, pk):
+        event = Events.objects.filter(pk=pk).first()
+        if event:
+            serializer = EventDetailSerializer(event)
+            return Response(serializer.data, status=status.HTTP_200_OK)
+        return Response("Event does not exist", status=status.HTTP_404_NOT_FOUND)
+        
+       
 
 class AttendanceAPIView(APIView):
+    #permission_classes = [IsCollegeAdmin]
     def get(self, request, pk = None):
         event_id = pk
         if pk is not None:
