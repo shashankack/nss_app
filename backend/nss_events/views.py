@@ -11,10 +11,10 @@ from datetime import datetime
 
 class EventAPIView(APIView):
     #permission_classes = [IsAuthenticated]
-    def get(self, request):      
+    """ def get(self, request):      
         events = Events.objects.all()
         serializer = EventSerializer(events, many=True)
-        return Response(serializer.data, status=status.HTTP_200_OK)
+        return Response(serializer.data, status=status.HTTP_200_OK) """
     
     def post(self, request):        
         data = request.data
@@ -40,7 +40,7 @@ class EventAPIView(APIView):
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
     
     def put(self, request, pk):
-        event = self.get_event(pk)
+        event = Events.objects.filter(pk=pk).first()
         serializer = EventSerializer(event, data=request.data, partial=True)
         if serializer.is_valid():
             serializer.save()
@@ -48,18 +48,23 @@ class EventAPIView(APIView):
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
     
     def delete(self, request, pk):
-        event = self.get_event(pk)
+        event = Events.objects.filter(pk=pk).first()
         event.delete()
         return Response("Event deleted", status=status.HTTP_204_NO_CONTENT)
     
 class EventDetailAPIView(APIView):
     #permission_classes = [IsAuthenticated]    
-    def get(self, request, pk):
-        event = Events.objects.filter(pk=pk).first()
-        if event:
-            serializer = EventDetailSerializer(event)
+    def get(self, request, pk=None):
+        if pk is not None:
+            event = Events.objects.filter(pk=pk).first()
+            if event:
+                serializer = EventDetailSerializer(event)
+                return Response(serializer.data, status=status.HTTP_200_OK)
+            return Response("Event does not exist", status=status.HTTP_404_NOT_FOUND)
+        else:
+            events = Events.objects.all()
+            serializer = EventDetailSerializer(events, many=True)
             return Response(serializer.data, status=status.HTTP_200_OK)
-        return Response("Event does not exist", status=status.HTTP_404_NOT_FOUND)
         
        
 
@@ -83,6 +88,11 @@ class AttendanceAPIView(APIView):
     def post(self, request):
         serializer = AttendanceSerializer(data=request.data)
         if serializer.is_valid():
+            volunteer = serializer.validated_data['volunteer']
+            event = serializer.validated_data['event']
+            if Attendance.objects.filter(event=event, volunteer=volunteer).exists():
+                return Response("Attendance already exists for this volunteer in the event", status=status.HTTP_400_BAD_REQUEST)
+            
             serializer.save()
             return Response("Attendance created", status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
