@@ -2,7 +2,7 @@
 
 ## STACK - Django Backend, React Frontend, Postgres DB
 
-## Local Development
+## Local Development Setup
 
 ### Build Images
 run the command from root - 
