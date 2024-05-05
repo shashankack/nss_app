@@ -31,9 +31,7 @@ class Events(models.Model):
 class Attendance(models.Model):
     class Meta:
         db_table = 'Attendance'
-        #unique_together = ('volunteer', 'event')
+        unique_together = ('volunteer', 'event')
 
     volunteer = models.ForeignKey(VolunteerProfile, on_delete=models.CASCADE)
     event = models.ForeignKey(Events, on_delete=models.CASCADE)
-    attended = models.BooleanField(default=True)
-    

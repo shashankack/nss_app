@@ -11,8 +11,10 @@ from .permissions import IsCollegeAdmin, IsSuperUser
 #APIViews to handle Volunteers
 
 class VolunteerAPIView(APIView):
-    #permission_classes = [IsCollegeAdmin]
+
+    permission_classes = [IsAuthenticated]
     def get(self, request, pk = None):
+        
         if pk is not None:
             volunteer = VolunteerProfile.objects.filter(pk=pk).first()
             if volunteer:
@@ -90,7 +92,7 @@ class VolunteerAPIView(APIView):
 #APIVIew to handle Users
 
 class UserAPIView(APIView):
-    #permission_classes = [IsSuperUser]
+    permission_classes = [IsAuthenticated]
     def get(self, request, pk = None):
         if pk is not None:
             user = User.objects.filter(pk=pk).first()

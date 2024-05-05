@@ -10,16 +10,9 @@ urlpatterns = [
     path('login/', TokenObtainPairView.as_view()),
     path('token/refresh/', TokenRefreshView.as_view()),
 
-    path('volunteer/view/', VolunteerAPIView.as_view()),
-    path('volunteer/view/<int:pk>/', VolunteerAPIView.as_view()),
-    path('volunteer/create/', VolunteerAPIView.as_view()),
-    path('volunteer/delete/<int:pk>/', VolunteerAPIView.as_view()),
-    path('volunteer/update/<int:pk>/', VolunteerAPIView.as_view()),
+    path('volunteer/', VolunteerAPIView.as_view()), #GET, POST
+    path('volunteer/<int:pk>/', VolunteerAPIView.as_view()), #GET, POST, UPDATE, DELETE
 
-    path('user/view/', UserAPIView.as_view()),
-    path('user/view/<int:pk>/', UserAPIView.as_view()),
-    path('user/create/', UserAPIView.as_view()),
-    path('user/delete/<int:pk>/', UserAPIView.as_view()),
-    path('user/update/<int:pk>/', UserAPIView.as_view()),
-
+    path('user/', UserAPIView.as_view()), ##GET, POST
+    path('user/<int:pk>/', UserAPIView.as_view()), #GET, POST, UPDATE, DELETE
 ]
