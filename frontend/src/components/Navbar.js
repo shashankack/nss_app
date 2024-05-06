@@ -14,6 +14,7 @@ import MenuItem from '@mui/material/MenuItem';
 import AdbIcon from '@mui/icons-material/Adb';
 import {  useLocation } from 'react-router-dom';
 import api from '../utils/api'
+import axios from 'axios';
 
 const pages = ['Products', 'Pricing', 'Blog'];
 const settings = ['Profile', 'Account', 'Dashboard', 'Logout'];
@@ -25,6 +26,7 @@ function ResponsiveAppBar() {
     api.get('/user/')
     .then((response) => {
         console.log('Abc')
+        axios.get(response.data.user)
 
     })
     .catch((error) => {

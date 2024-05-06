@@ -14,7 +14,9 @@ const Login = () => {
   const classes = useStyles();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [error, setError] = useState('');
   const nav = useNavigate();
+
 
   const handleEmailChange = (e) => {
     setEmail(e.target.value);
@@ -36,16 +38,10 @@ const Login = () => {
 
     })
     .catch((error) => {
-        console.log(error)
+        setError('Invalid login credentials');
     });
 
   };
-
-
-
-
-
-
 
 
   return (
@@ -66,7 +62,7 @@ const Login = () => {
             autoComplete="email"
             autoFocus
             onChange={handleEmailChange}
-          />
+            />
           <TextField
             variant="outlined"
             margin="normal"
@@ -78,7 +74,8 @@ const Login = () => {
             id="password"
             autoComplete="current-password"
             onChange={handlePasswordChange}
-          />
+            />
+            {error && <Typography color="error">{error}</Typography>}
           <Button
             type="submit"
             fullWidth
