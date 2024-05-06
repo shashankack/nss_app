@@ -8,12 +8,20 @@ function App() {
 
   
   return (
+<<<<<<< HEAD
     <Router>
       <div className="App">
         <Navbar />
         <Routes /> {/* Render the Routes component */}
       </div>
     </Router>
+=======
+    <>
+       {/* <Navbar/>    */}
+    <LoginForm/> 
+    
+    </>
+>>>>>>> f514797f9 (get Update)
   );
 }
 
