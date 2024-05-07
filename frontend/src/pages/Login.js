@@ -9,13 +9,13 @@ import { useNavigate  } from 'react-router-dom';
 const useStyles = makeStyles((theme) => ({
 
 }));
-
+ 
 const Login = () => {
-  const classes = useStyles();
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [error, setError] = useState('');
-  const nav = useNavigate();
+const classes = useStyles();
+const [email, setEmail] = useState('');
+const [password, setPassword] = useState('');
+const [error, setError] = useState('');
+const nav = useNavigate();
 
 
   const handleEmailChange = (e) => {
@@ -29,7 +29,7 @@ const Login = () => {
   const handleSubmit = (e) => {
     e.preventDefault();
     console.log(email);
-    console.log(password)
+    console.log(password);
     axios.post(`http://localhost:8000/api/login/`, { "email": email, "password": password })
     .then((response) => {
         setAccessToken(response.data.access);
@@ -59,8 +59,8 @@ const Login = () => {
             id="email"
             label="Email Address"
             name="email"
-            autoComplete="email"
-            autoFocus
+             autoComplete="email"
+             autoFocus
             onChange={handleEmailChange}
             />
           <TextField

@@ -26,8 +26,6 @@ function ResponsiveAppBar() {
     api.get('/user/')
     .then((response) => {
         console.log('Abc')
-        axios.get(response.data.user)
-
     })
     .catch((error) => {
         console.log(error)
