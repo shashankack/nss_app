@@ -26,7 +26,7 @@ class Events(models.Model):
     postponed_date = models.DateField(auto_now=False, auto_now_add=False, blank=True, null=True)
     postponed_time = models.TimeField(auto_now=False, auto_now_add=False, blank=True, null=True)
     is_cancelled = models.BooleanField(default=False)
-    credit_score = models.IntegerField(null=True)
+    credit_points = models.IntegerField(null=True)
 
 class Attendance(models.Model):
     class Meta:
@@ -35,5 +35,3 @@ class Attendance(models.Model):
 
     volunteer = models.ForeignKey(VolunteerProfile, on_delete=models.CASCADE)
     event = models.ForeignKey(Events, on_delete=models.CASCADE)
-    attended = models.BooleanField(default=True)
-    

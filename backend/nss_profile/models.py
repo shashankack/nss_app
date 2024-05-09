@@ -50,10 +50,10 @@ class College(models.Model):
     city = models.CharField(max_length=30, null=False)
 
 class CollegeCourses(models.Model):
-    college = models.ForeignKey(College, on_delete=models.CASCADE) #Doubt
+    college = models.ForeignKey(College, on_delete=models.CASCADE)
     course = models.CharField(max_length=50)
     specialization = models.CharField(max_length=50, null=True)
-    year = models.IntegerField(max_length=1)
+    year = models.IntegerField()
     status = models.CharField(max_length=1, choices=STATUS_CHOICE)
 
 
@@ -64,7 +64,7 @@ class VolunteerProfile(models.Model):
         db_table = 'VolunteerProfile'
 
     user = models.ForeignKey(User, on_delete=models.CASCADE)
-    course = models.ForeignKey(CollegeCourses, on_delete=models.CASCADE) #Doubt
+    course = models.ForeignKey(CollegeCourses, on_delete=models.CASCADE)
     volunteering_year = models.CharField(max_length=9)
     role = models.CharField(max_length=20, choices=ROLE_CHOICES, default='Volunteer')
 
