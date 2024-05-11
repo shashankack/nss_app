@@ -19,10 +19,12 @@ const nav = useNavigate();
 
 
   const handleEmailChange = (e) => {
+    e.preventDefault();
     setEmail(e.target.value);
   };
 
   const handlePasswordChange = (e) => {
+    e.preventDefault();
     setPassword(e.target.value);
   };
 
@@ -30,7 +32,7 @@ const nav = useNavigate();
     e.preventDefault();
     console.log(email);
     console.log(password);
-    axios.post(`http://localhost:8000/api/login/`, { "email": email, "password": password })
+    axios.post('http://localhost:8000/api/login/', { "email": email, "password": password })
     .then((response) => {
         setAccessToken(response.data.access);
         setRefreshToken(response.data.refresh);
