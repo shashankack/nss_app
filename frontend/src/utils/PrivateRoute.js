@@ -1,16 +1,11 @@
-import { Route, Navigate, Routes } from "react-router-dom";
+import {  Navigate, Outlet } from "react-router-dom";
 
-const PrivateRoute = ({ children, ...rest }) => {
+const PrivateRoute = () => {
   console.log("private route !! ");
-  const authenticated = false;
+  let authenticated = {'token':false};
 
   return (
-    <Routes>
-      <Route
-        {...rest}element={!authenticated ? <Navigate to="/Login"/> : children}></Route>
-        
-    
-    </Routes>
+     authenticated.token ? <Outlet/> : <Navigate to ="/Login"/>
   );
 };
 

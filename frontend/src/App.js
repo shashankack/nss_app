@@ -16,11 +16,12 @@ function App() {
 
     <Router>   
       <Header/>
-      <PrivateRoute Component ={Home} path="/" />  
+      
   <Routes>
-  {/* <PrivateRoute Component ={Home} path="/" exact/>  */}
-   
-      <Route Component={Login}path='/Login'/>    
+    <Route element = {<PrivateRoute/>} >
+    <Route element={<Home/>}path='/'exact/>   
+  </Route>
+  <Route element={<Login/>}path='/Login'/> 
   </Routes>
     </Router>
     </div>
