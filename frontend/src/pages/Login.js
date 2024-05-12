@@ -5,8 +5,8 @@ export default function Login() {
   return (
     <div>
       <form onSubmit={LoginUser}>
-      <input type='email' name='username' placeholder='email'/><br/>
-      <input type='password' name='password' placeholder='password'/><br/>
+      <input type='email' name='username' placeholder='email'autoComplete="current-username"/><br/>
+      <input type='password' name='password' placeholder='password'autoComplete="current-password"/><br/>
       <button type='submit' ></button>
       </form>
       

@@ -13,7 +13,7 @@ export const AuthProvider = ({children})=>{
 
     let LoginUser = async(e )=>{
         e.prevenDefault()
-      let response = await fetch('http://localhost:8000/api/token/refresh/',{
+      let response = await fetch('',{
         method :'POST',
         headers:{
             'Content-Type' : 'application/json'
@@ -22,9 +22,18 @@ export const AuthProvider = ({children})=>{
       }) 
       let data = await response.json()
       console.log('data:',data)
+      console.log('response : ',response)
+      if (response.status === 200){
+            setAuthTokens(data)
+            setUser(jwt_decode(data.access))
+      }
+      else{
+        alert('Invalid Credentials')
+      }
     }
 
     let contextData = {
+        user:user,
         LoginUser:LoginUser 
     }
     return(
