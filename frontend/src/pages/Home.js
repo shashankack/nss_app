@@ -1,19 +1,9 @@
+import React from 'react'
 
-import React, { useState } from 'react';
-import { Container, Typography, TextField, Button, Grid } from '@mui/material';
-import {makeStyles} from '@mui/styles'
-import {login} from '../utils/auth'
-import {api} from '../utils/api'
-
-const Home = () => {
-
-
-
+export default function Home() {
   return (
     <div>
-      
+      <h1>helo this is home </h1>
     </div>
-  );
+  )
 }
-
-export default Home;
