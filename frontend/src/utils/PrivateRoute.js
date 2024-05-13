@@ -1,7 +1,7 @@
 import {  Navigate, Outlet } from "react-router-dom";
 
 const PrivateRoute = () => {
-  console.log("private route !! ");
+  console.log("LOgin FIrst!! ");
   let authenticated = {'token':false};
 
   return (
