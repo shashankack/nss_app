@@ -10,7 +10,8 @@ const Routes = () => {
     <RRoutes>
       <Route path="/login"  element={<Login/>} />
       <Route exact path="/"  element={<Home/>} />
-      <Route  element={<NotFound/>} />
+      <Route path="*" element={<NotFound/>} />
+      
     </RRoutes>
   );
 }

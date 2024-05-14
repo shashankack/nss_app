@@ -5,13 +5,13 @@ from .models import VolunteerProfile, User
 from .serializers import VolunteerProfileSerializer, UserSerializer
 from rest_framework.permissions import IsAuthenticated
 from django.contrib.auth.hashers import make_password
-from .permissions import IsCollegeAdmin, IsSuperUser
+from .permissions import IsCollegeAdmin
+
 
 
 #APIViews to handle Volunteers
 
 class VolunteerAPIView(APIView):
-
     permission_classes = [IsAuthenticated]
     def get(self, request, pk = None):
         
@@ -92,7 +92,7 @@ class VolunteerAPIView(APIView):
 #APIVIew to handle Users
 
 class UserAPIView(APIView):
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsCollegeAdmin]
     def get(self, request, pk = None):
         if pk is not None:
             user = User.objects.filter(pk=pk).first()

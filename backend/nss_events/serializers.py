@@ -12,7 +12,6 @@ class EventSerializer(serializers.ModelSerializer):
 
 
 class AttendanceSerializer(serializers.ModelSerializer):
-    volunteer_ids = serializers.ListField(child=serializers.IntegerField())
     class Meta:
         model = Attendance
         fields = '__all__'

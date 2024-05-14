@@ -24,8 +24,9 @@ STATUS_CHOICE = [
 ]
 
 ROLE_CHOICES = [
-    ('Leader', 'Leader'),
-    ('Volunteer', 'Volunteer'),
+    ('admin', 'College Admin'),
+    ('leader', 'Leader'),
+    ('volunteer', 'Volunteer'),
 ]
 
 class User(AbstractUser):
