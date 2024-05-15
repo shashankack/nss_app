@@ -4,7 +4,6 @@ from rest_framework.views import APIView
 from .models import VolunteerProfile, User
 from .serializers import VolunteerProfileSerializer, UserSerializer
 from rest_framework.permissions import IsAuthenticated
-from django.contrib.auth.hashers import make_password
 from .permissions import IsCollegeAdmin
 
 
@@ -38,9 +37,6 @@ class VolunteerAPIView(APIView):
 
         if isinstance(user_data, dict):
             serializer = UserSerializer(data=user_data)
-            password = user_data.get('password')
-            if password:
-                user_data['password'] = make_password(password)
             if serializer.is_valid():
                 user = serializer.save()
                 data['user'] = user.id
