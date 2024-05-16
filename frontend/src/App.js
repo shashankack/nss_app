@@ -1,28 +1,17 @@
-// app.js
 import React from 'react';
 import { BrowserRouter as Router } from 'react-router-dom';
-import Routes from './Routes';
-import Navbar from './components/Navbar'; // Import Navbar component
+import Navbar from './components/Navbar';
+import Routes from './Routes'; 
 
 function App() {
-
-  
   return (
-<<<<<<< HEAD
     <Router>
-      <div className="App">
+      <div className='App'>
         <Navbar />
-        <Routes /> {/* Render the Routes component */}
+        <Routes />
       </div>
     </Router>
-=======
-    <>
-       {/* <Navbar/>    */}
-    <LoginForm/> 
-    
-    </>
->>>>>>> f514797f9 (get Update)
-  );
+  )
 }
 
 export default App;
