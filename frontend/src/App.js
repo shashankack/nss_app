@@ -8,7 +8,7 @@ function App() {
 
   
   return (
-<>
+    <>
     <Router>
       <div className="App">
         <Navbar />
@@ -16,11 +16,11 @@ function App() {
       </div>
     </Router>
 
-    
+  
        {/* <Navbar/>    */}
     {/* <LoginForm/>  */}
     
-    </>    
+    </>
 
   );
 }
