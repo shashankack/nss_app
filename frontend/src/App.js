@@ -6,9 +6,15 @@ import Routes from './Routes';
 function App() {
   return (
     <Router>
+<<<<<<< Updated upstream
       <div className='App'>
         <Navbar />
         <Routes />
+=======
+      <div className="App">
+        <Navbar /> 
+        <Routes /> {/* Render the Routes component */}
+>>>>>>> Stashed changes
       </div>
     </Router>
   )

@@ -6,6 +6,7 @@ import { isAuthenticated } from "./utils/auth";
 
 
 const Routes = () => {
+<<<<<<< Updated upstream
     return (
         <RRoutes>
             <Route exact path="/" element={ {isAuthenticated} ? <Home/> : <Login/>} />
@@ -13,6 +14,17 @@ const Routes = () => {
             <Route path="/*" element={<NotFound/>} />
         </RRoutes>
     )
+=======
+  return (
+    <RRoutes>
+      <Route path="/login"  element={<Login/>} />
+      <Route element={<PrivateRoutes/>}> <Route exact path="/"  element={<Home/>} />
+      </Route>   
+      <Route path="*" element={<NotFound/>} />
+      
+    </RRoutes>
+  );
+>>>>>>> Stashed changes
 }
 
 export default Routes;
