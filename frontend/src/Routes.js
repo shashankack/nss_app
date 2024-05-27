@@ -1,30 +1,23 @@
-import { Route, Routes as RRoutes } from "react-router-dom";
+import { Route, Routes as Router } from "react-router-dom";
 import Home from './pages/Home';
-import Login from './pages/Login';
-import NotFound from './pages/NotFound';
-import { isAuthenticated } from "./utils/auth";
-
+// import Login from './pages/Login';
+// import NotFound from './pages/NotFound';
+// import { isAuthenticated } from "./utils/auth";
+import PrivateRoute from "./components/PrivateRoute";
 
 const Routes = () => {
-<<<<<<< Updated upstream
     return (
-        <RRoutes>
-            <Route exact path="/" element={ {isAuthenticated} ? <Home/> : <Login/>} />
-            <Route path="/login" element={<Login/>} />
-            <Route path="/*" element={<NotFound/>} />
-        </RRoutes>
+      <Router>
+      <Routes>
+      <Route element={<PrivateRoute/>}>
+      <Route element={<Home/>} path ="/"exact/>
+      </Route>
+    </Routes>
+    </Router>
     )
-=======
-  return (
-    <RRoutes>
-      <Route path="/login"  element={<Login/>} />
-      <Route element={<PrivateRoutes/>}> <Route exact path="/"  element={<Home/>} />
-      </Route>   
-      <Route path="*" element={<NotFound/>} />
-      
-    </RRoutes>
-  );
->>>>>>> Stashed changes
+
+
+
 }
 
 export default Routes;

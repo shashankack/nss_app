@@ -1,22 +1,13 @@
 import React from 'react';
-import { BrowserRouter as Router } from 'react-router-dom';
+import { Route, BrowserRouter as Router,Routes } from 'react-router-dom';
 import Navbar from './components/Navbar';
 import Routes from './Routes'; 
-
+import PrivateRoute from './components/PrivateRoute';
 function App() {
   return (
-    <Router>
-<<<<<<< Updated upstream
       <div className='App'>
-        <Navbar />
-        <Routes />
-=======
-      <div className="App">
-        <Navbar /> 
-        <Routes /> {/* Render the Routes component */}
->>>>>>> Stashed changes
+        <Routes /> 
       </div>
-    </Router>
   )
 }
 
