@@ -26,20 +26,29 @@ api.interceptors.request.use(
 // Response interceptor to handle 401 errors and refresh tokens
 api.interceptors.response.use(
   (response) => {
-    return response;
+    return response; 
   },
   async (error) => {
     const originalRequest = error.config;
-    if (error.response.status === 401 && !originalRequest._retry) {
+
+    // Check if error response status is 401 (Unauthorized)
+    // and if the original request has not been retried yet
+    if (error.response && error.response.status === 401 && !originalRequest._retry) {
       originalRequest._retry = true;
       try {
         await refreshToken(); // Call your refresh token function
-        return api(originalRequest);
+        const newAccessToken = localStorage.getItem('accessToken');
+        if (newAccessToken) {
+          originalRequest.headers.Authorization = `Bearer ${newAccessToken}`;
+        }
+        return api(originalRequest); // Retry the original request with the new token
       } catch (refreshError) {
-        logout(); // Call your logout function
+        await logout(); // Call your logout function
         window.location.href = '/login'; // Redirect to login page
       }
     }
+
+    // If the error is not a 401 or the refresh attempt fails, reject the promise
     return Promise.reject(error);
   }
 );

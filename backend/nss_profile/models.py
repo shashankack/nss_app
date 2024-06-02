@@ -24,7 +24,6 @@ STATUS_CHOICE = [
 ]
 
 ROLE_CHOICES = [
-    ('admin', 'College Admin'),
     ('leader', 'Leader'),
     ('volunteer', 'Volunteer'),
 ]
@@ -71,3 +70,11 @@ class VolunteerProfile(models.Model):
     volunteering_year = models.CharField(max_length=9)
     role = models.CharField(max_length=20, choices=ROLE_CHOICES, default='Volunteer')
 
+
+class CollegeAdmin(models.Model):
+
+    class Meta:
+        db_table = 'UserCollegeRole'
+     
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    college = models.ForeignKey(College, on_delete=models.CASCADE)

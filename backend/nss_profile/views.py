@@ -4,16 +4,26 @@ from rest_framework.views import APIView
 from .models import VolunteerProfile, User
 from .serializers import VolunteerProfileSerializer, UserSerializer
 from rest_framework.permissions import IsAuthenticated
-from .permissions import IsCollegeAdmin
-
-
-
+from .permissions import IsCollegeAdmin, IsSuperUser
 #APIViews to handle Volunteers
 
-class VolunteerAPIView(APIView):
-    permission_classes = [IsAuthenticated]
-    def get(self, request, pk = None):
-        
+
+class LoggedInUserAPIView(APIView): 
+    def get(self, request):
+        self.permission_classes = [IsAuthenticated]
+        self.check_permissions(request)
+        volunteer = VolunteerProfile.objects.filter(pk=request.user.id).first()
+        #if volunteer:
+        serializer = VolunteerProfileSerializer(volunteer)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+        """ else:
+            return Response("Invalid id or volunteer does not exist", status=status.HTTP_404_NOT_FOUND) """
+
+
+class VolunteerAPIView(APIView): 
+    def get(self, request, pk = None):       
+        self.permission_classes = [IsAuthenticated]
+        self.check_permissions(request)
         if pk is not None:
             volunteer = VolunteerProfile.objects.filter(pk=pk).first()
             if volunteer:
@@ -28,6 +38,8 @@ class VolunteerAPIView(APIView):
 
 
     def post(self, request):
+        self.permission_classes = [IsCollegeAdmin]
+        self.check_permissions(request)
         data = request.data
         user_data = data.get('user')
         volunteering_year = data.get('volunteering_year')
@@ -64,6 +76,8 @@ class VolunteerAPIView(APIView):
 
 
     def delete(self, request, pk):
+        self.permission_classes = [IsCollegeAdmin]
+        self.check_permissions(request)
         volunteer = VolunteerProfile.objects.filter(pk=pk).first()
         if not volunteer:
             return Response("Volunteer does not exist", status=status.HTTP_404_NOT_FOUND)
@@ -73,6 +87,8 @@ class VolunteerAPIView(APIView):
     
 
     def put(self, request, pk):
+        self.permission_classes = [IsCollegeAdmin] or [IsAuthenticated]
+        self.check_permissions(request)
         volunteer = VolunteerProfile.objects.filter(pk=pk).first()
         if not volunteer:
             return Response("Volunteer not exist", status=status.HTTP_404_NOT_FOUND)
@@ -90,7 +106,9 @@ class VolunteerAPIView(APIView):
 class UserAPIView(APIView):
     permission_classes = [IsCollegeAdmin]
     def get(self, request, pk = None):
+        print('I am here...')
         if pk is not None:
+            
             user = User.objects.filter(pk=pk).first()
             if user:
                 serializer = UserSerializer(user)
@@ -118,7 +136,7 @@ class UserAPIView(APIView):
         serializer = UserSerializer(user, data=request.data, partial=True)
         if serializer.is_valid():
             serializer.save()
-            return Response(serializer.data, status=status.HTTP_200_OK)
+            return Response("User has been updated", status=status.HTTP_200_OK)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
     
     def delete(self, request, pk):

@@ -1,28 +1,14 @@
-// app.js
 import React from 'react';
-import { BrowserRouter as Router } from 'react-router-dom';
-import Routes from './Routes';
-import Navbar from './components/Navbar'; // Import Navbar component
-
+import { Route, BrowserRouter as Router,Routes } from 'react-router-dom';
+import Navbar from './components/Navbar';
+import NewRoutes from './NewRoutes'; 
+import PrivateRoute from './components/PrivateRoute';
 function App() {
-
-  
   return (
-<<<<<<< HEAD
-    <Router>
-      <div className="App">
-        <Navbar />
-        <Routes /> {/* Render the Routes component */}
+      <div className='App'>
+        <NewRoutes /> 
       </div>
-    </Router>
-=======
-    <>
-       {/* <Navbar/>    */}
-    <LoginForm/> 
-    
-    </>
->>>>>>> f514797f9 (get Update)
-  );
+  )
 }
 
 export default App;
