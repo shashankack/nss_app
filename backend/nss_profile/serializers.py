@@ -1,6 +1,5 @@
 from rest_framework import serializers
-from .models import VolunteerProfile, User
-from django.contrib.auth.hashers import make_password
+from .models import VolunteerProfile, User, College, CollegeAdmin, CollegeCourses
 
 class VolunteerProfileSerializer(serializers.ModelSerializer):
     username = serializers.CharField(source='user.username', read_only=True)
@@ -23,11 +22,36 @@ class UserSerializer(serializers.ModelSerializer):
         fields = '__all__'
 
     def create(self, validated_data):
+        user = User.objects.create_user(**validated_data)
         password = validated_data.pop('password', None)
         if password:
-            validated_data['password'] = make_password(password)
-        else:
-            validated_data.pop('password', None)
-        user = User.objects.create_user(**validated_data)
-        return user
-            
+            user.set_password(password)
+        user.save()
+        return user 
+        
+class CollegeAdminSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = CollegeAdmin
+        fields = '__all__'
+
+    def create(self, validated_data):
+        admin = CollegeAdmin.objects.create_admin(**validated_data)
+        return admin
+    
+class CollegeSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = College
+        fields = '__all__'
+    
+    def create(self, validated_data):
+        college = College.objects.create_college(**validated_data)
+        return college
+    
+class CollegeCoursesSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = CollegeCourses
+        fields = '__all__'
+
+    def create(self, validated_data):
+        course = CollegeCourses.objects.create_course(**validated_data)
+        return course

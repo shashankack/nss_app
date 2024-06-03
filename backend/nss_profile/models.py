@@ -24,7 +24,6 @@ STATUS_CHOICE = [
 ]
 
 ROLE_CHOICES = [
-    ('admin', 'College Admin'),
     ('leader', 'Leader'),
     ('volunteer', 'Volunteer'),
 ]
@@ -36,12 +35,13 @@ class User(AbstractUser):
 
     email = models.EmailField(unique=True)
     gender = models.CharField(max_length=1, choices=GENDER_CHOICES)
-    blood_group = models.CharField(max_length=3, choices=BLOOD_GROUP_CHOICES)
+    blood_group = models.CharField(choices=BLOOD_GROUP_CHOICES)
     first_name = models.CharField(max_length=50, blank=False)
     last_name = models.CharField(max_length=50, blank=False)
+    is_admin = models.BooleanField(default=False)
 
     USERNAME_FIELD = 'email'
-    REQUIRED_FIELDS = ['first_name', 'last_name', 'blood_group', 'gender']
+    REQUIRED_FIELDS = ['username', 'first_name', 'last_name', 'blood_group', 'gender']
 
 
 
@@ -51,18 +51,18 @@ class College(models.Model):
         
     college_name = models.CharField(max_length=120, null=False)
     city = models.CharField(max_length=30, null=False)
+    college_code = models.CharField(max_length=20, null=False, unique=True)
 
 class CollegeCourses(models.Model):
     college = models.ForeignKey(College, on_delete=models.CASCADE)
     course = models.CharField(max_length=50)
     specialization = models.CharField(max_length=50, null=True)
     year = models.IntegerField()
-    status = models.CharField(max_length=1, choices=STATUS_CHOICE)
+    status = models.IntegerField(choices=STATUS_CHOICE)
 
 
 #Details in this table will change every year
 class VolunteerProfile(models.Model):
-
     class Meta:
         db_table = 'VolunteerProfile'
 
@@ -71,3 +71,11 @@ class VolunteerProfile(models.Model):
     volunteering_year = models.CharField(max_length=9)
     role = models.CharField(max_length=20, choices=ROLE_CHOICES, default='Volunteer')
 
+
+class CollegeAdmin(models.Model):
+
+    class Meta:
+        db_table = 'CollegeAdmin'
+     
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    college = models.ForeignKey(College, on_delete=models.CASCADE)
