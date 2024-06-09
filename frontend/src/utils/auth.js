@@ -1,28 +1,28 @@
 import axios from 'axios';
-import { Navigate } from 'react-router-dom';
+
 
 let user = null;
 
 export function isAuthenticated() {
-  return localStorage.getItem('access' !== null);
+  return localStorage.getItem('accessToken' !== null);
 }
 
-
 export function setAccessToken(access) {
-  localStorage.setItem('access', access);
+  localStorage.setItem('accessToken', access);
 }
 
 export function setRefreshToken(refresh) {
-  localStorage.setItem('refresh', refresh);
+  localStorage.setItem('refreshToken', refresh);
 }
 
-export function logout() {
-  if (!localStorage.getItem('access') || !localStorage.getItem('refresh')) {
-    return;
+export function clearTokens() {
+  if (localStorage.getItem('accessToken')) {
+    localStorage.removeItem('accessToken');
   }
-  localStorage.removeItem('refresh');
-  localStorage.removeItem('access');
-  return <Navigate to="./pages/Login" replace />;
+  if (localStorage.getItem('refreshToken')) {
+    localStorage.removeItem('refreshToken');
+  }
+
 }
 
 // Function to perform refresh token API call
