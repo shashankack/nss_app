@@ -2,7 +2,7 @@ from rest_framework.response import Response
 from rest_framework import status
 from rest_framework.views import APIView
 from .models import VolunteerProfile, User
-from .serializers import VolunteerProfileSerializer, UserSerializer
+from .serializers import VolunteerProfileSerializer, UserSerializer, LoggedInUserSerializer
 from rest_framework.permissions import IsAuthenticated
 from .permissions import IsCollegeAdmin, IsSuperUser
 #APIViews to handle Volunteers
@@ -12,12 +12,10 @@ class LoggedInUserAPIView(APIView):
     def get(self, request):
         self.permission_classes = [IsAuthenticated]
         self.check_permissions(request)
-        volunteer = VolunteerProfile.objects.filter(pk=request.user.id).first()
-        #if volunteer:
-        serializer = VolunteerProfileSerializer(volunteer)
-        return Response(serializer.data, status=status.HTTP_200_OK)
-        """ else:
-            return Response("Invalid id or volunteer does not exist", status=status.HTTP_404_NOT_FOUND) """
+        volunteer = User.objects.filter(pk=request.user.id).first()
+        serializer = LoggedInUserSerializer(volunteer)
+        #return Response(serializer.data, status=status.HTTP_200_OK)
+        return Response({"college": "ABC"})
 
 
 class VolunteerAPIView(APIView): 

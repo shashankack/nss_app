@@ -19,8 +19,8 @@ BLOOD_GROUP_CHOICES = [
 ]
 
 STATUS_CHOICE = [
-    ('0', 'Inactive'),
-    ('1', 'Active'),
+    (0, 'Inactive'),
+    (1, 'Active'),
 ]
 
 ROLE_CHOICES = [
@@ -58,6 +58,12 @@ class CollegeCourses(models.Model):
     year = models.IntegerField()
     status = models.CharField(max_length=1, choices=STATUS_CHOICE)
 
+class NSSYear(models.Model):
+    class Meta:
+        db_table = "NSSYear"
+    year = models.CharField(max_length=9)
+    is_active = models.BooleanField(default=False)
+    
 
 #Details in this table will change every year
 class VolunteerProfile(models.Model):
@@ -67,7 +73,7 @@ class VolunteerProfile(models.Model):
 
     user = models.ForeignKey(User, on_delete=models.CASCADE)
     course = models.ForeignKey(CollegeCourses, on_delete=models.CASCADE)
-    volunteering_year = models.CharField(max_length=9)
+    volunteering_year = models.ForeignKey(NSSYear, on_delete=models.CASCADE)
     role = models.CharField(max_length=20, choices=ROLE_CHOICES, default='Volunteer')
 
 

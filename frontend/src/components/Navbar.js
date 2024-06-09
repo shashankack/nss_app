@@ -12,17 +12,38 @@ import Button from '@mui/material/Button';
 import Tooltip from '@mui/material/Tooltip';
 import MenuItem from '@mui/material/MenuItem';
 import AdbIcon from '@mui/icons-material/Adb';
+import {  useLocation, useNavigate } from 'react-router-dom';
+import api from '../utils/api'
+import { clearTokens } from '../utils/auth'
+import axios from 'axios';
 
 
-
-const pages = ['Products', 'Pricing', 'Blog'];
-const settings = ['Profile', 'Account', 'Dashboard', 'Logout'];
 
 function ResponsiveAppBar() {
+  const location = useLocation();
+  const isNotLoginPage = location.pathname != '/login';
+  const nav = useNavigate();
+    
   const [anchorElNav, setAnchorElNav] = React.useState(null);
   const [anchorElUser, setAnchorElUser] = React.useState(null);
+  const [firstName, setFirstName] = React.useState('');
+  const [userProfile, setUserProfile] = React.useState({});
+
+  React.useEffect(() => {
+    if (isNotLoginPage) {
+      api.get('/loggedInUserProfile/')
+      .then (response => {
+        setUserProfile(response.data);
+        console.log(userProfile)
+      })
+      .catch(error => {
+        console.error();
+      });
+    }
+  }, [isNotLoginPage]);
 
   const handleOpenNavMenu = (event) => {
+    console.log(userProfile)
     setAnchorElNav(event.currentTarget);
   };
   const handleOpenUserMenu = (event) => {
@@ -32,12 +53,18 @@ function ResponsiveAppBar() {
   const handleCloseNavMenu = () => {
     setAnchorElNav(null);
   };
-
+  const handleLogout = () => {
+    handleCloseNavMenu();
+    handleCloseUserMenu();
+    clearTokens();
+    nav("/login");
+  }
   const handleCloseUserMenu = () => {
     setAnchorElUser(null);
   };
 
   return (
+    isNotLoginPage && 
     <AppBar position="static">
       <Container maxWidth="xl">
         <Toolbar disableGutters>
@@ -57,7 +84,7 @@ function ResponsiveAppBar() {
               textDecoration: 'none',
             }}
           >
-            LOGO
+              {userProfile.college}
           </Typography>
 
           <Box sx={{ flexGrow: 1, display: { xs: 'flex', md: 'none' } }}>
@@ -89,11 +116,9 @@ function ResponsiveAppBar() {
                 display: { xs: 'block', md: 'none' },
               }}
             >
-              {pages.map((page) => (
-                <MenuItem key={page} onClick={handleCloseNavMenu}>
-                  <Typography textAlign="center">{page}</Typography>
+                <MenuItem key="name" onLoad={setFirstName}>
+                  <Typography textAlign="center">Welcome, {firstName}</Typography>
                 </MenuItem>
-              ))}
             </Menu>
           </Box>
           <AdbIcon sx={{ display: { xs: 'flex', md: 'none' }, mr: 1 }} />
@@ -116,15 +141,7 @@ function ResponsiveAppBar() {
             LOGO
           </Typography>
           <Box sx={{ flexGrow: 1, display: { xs: 'none', md: 'flex' } }}>
-            {pages.map((page) => (
-              <Button
-                key={page}
-                onClick={handleCloseNavMenu}
-                sx={{ my: 2, color: 'white', display: 'block' }}
-              >
-                {page}
-              </Button>
-            ))}
+            
           </Box>
 
           <Box sx={{ flexGrow: 0 }}>
@@ -149,11 +166,13 @@ function ResponsiveAppBar() {
               open={Boolean(anchorElUser)}
               onClose={handleCloseUserMenu}
             >
-              {settings.map((setting) => (
-                <MenuItem key={setting} onClick={handleCloseUserMenu}>
-                  <Typography textAlign="center">{setting}</Typography>
+                <MenuItem key="profile" onClick={handleCloseUserMenu}>
+                  <Typography textAlign="center">My Profile</Typography>
                 </MenuItem>
-              ))}
+                <MenuItem key="logout" onClick={handleLogout}>
+                  <Typography textAlign="center">Logout</Typography>
+                </MenuItem>
+
             </Menu>
           </Box>
         </Toolbar>

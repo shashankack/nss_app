@@ -1,5 +1,5 @@
 import axios from 'axios';
-import { refreshToken, logout } from './auth'; // Import your authentication functions
+import { refreshToken, clearTokens } from './auth'; // Import your authentication functions
 
 const BASE_URL = 'http://localhost:8000/api'; // Your API base URL
 
@@ -43,7 +43,7 @@ api.interceptors.response.use(
         }
         return api(originalRequest); // Retry the original request with the new token
       } catch (refreshError) {
-        await logout(); // Call your logout function
+        await clearTokens(); // Call your logout function
         window.location.href = '/login'; // Redirect to login page
       }
     }

@@ -1,13 +1,16 @@
 import React from 'react';
-import { Route, BrowserRouter as Router,Routes } from 'react-router-dom';
+import { BrowserRouter as Router } from 'react-router-dom';
 import Navbar from './components/Navbar';
-import NewRoutes from './NewRoutes'; 
-import PrivateRoute from './components/PrivateRoute';
+import Routes from './Routes'; 
+
 function App() {
   return (
+    <Router>
       <div className='App'>
-        <NewRoutes /> 
+        <Navbar />
+        <Routes />
       </div>
+    </Router>
   )
 }
 

@@ -16,6 +16,11 @@ class VolunteerProfileSerializer(serializers.ModelSerializer):
         return volunteer
         
 
+class LoggedInUserSerializer(serializers.Serializer):
+    class Meta:
+        model = User
+        fields = '__all__'
+
 
 class UserSerializer(serializers.ModelSerializer):
     class Meta:

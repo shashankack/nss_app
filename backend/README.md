@@ -58,3 +58,32 @@
 - GET:
 - PUT:  [isAdmin]
 - DELETE:   [isAdmin]
+
+
+
+
+### /api/loggedinuser/
+{
+"username": "",
+"fn": "",
+"ln": "",
+"college": "",
+"course":"",
+"year": "",
+"role": "CollegeAdmin/Volunteer/Lead",
+}
+
+if isCollegeAdmin()
+ return new CollegeAdmin
+ else :
+
+
+
+Navbar {
+    Logo
+    College Name
+    
+    LoggedInUser {
+
+    }
+}
