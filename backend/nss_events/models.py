@@ -5,6 +5,8 @@ from django.dispatch import receiver
 from nss_profile.models import VolunteerProfile
 
 
+
+
 STATUS_CHOICES = (
     ('upcoming', 'Upcoming'),
     ('ongoing', 'Ongoing'),
@@ -23,9 +25,6 @@ class Events(models.Model):
     start_time = models.TimeField()
     location = models.CharField(max_length=250)
     status = models.CharField(choices=STATUS_CHOICES)
-    postponed_date = models.DateField(auto_now=False, auto_now_add=False, blank=True, null=True)
-    postponed_time = models.TimeField(auto_now=False, auto_now_add=False, blank=True, null=True)
-    is_cancelled = models.BooleanField(default=False)
     credit_points = models.IntegerField(null=True)
 
 class Attendance(models.Model):

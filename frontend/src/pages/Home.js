@@ -1,68 +1,137 @@
+import React, { useState, useEffect } from 'react';
+import { Container, Tabs, Tab, Box, Typography, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper, CircularProgress } from '@mui/material';
+import { useNavigate } from 'react-router-dom'; // Assuming you are using React Router for navigation
+import api from '../utils/api';
 
-import React, { useState } from 'react';
-import { Container, Typography, TextField, Button, Grid } from '@mui/material';
-import {makeStyles} from '@mui/styles'
-import {login} from '../utils/auth'
-import api from '../utils/api'
-import Navbar from '../components/Navbar'
-import Table from '@mui/material/Table';
-import TableBody from '@mui/material/TableBody';
-import TableCell from '@mui/material/TableCell';
-import TableContainer from '@mui/material/TableContainer';
-import TableHead from '@mui/material/TableHead';
-import TableRow from '@mui/material/TableRow';
-import Paper from '@mui/material/Paper';
-const Home = () => {
+const fetchEvents = async (status) => {
+  return await api.get(`/event?status=${status}`);
+};
 
-  const [users, setUsers] = useState([])
+const fetchAttendedEvents = async () => {
+  return await api.get('/volunteer/eventsAttended');
+};
 
-  api.get('/user/')
-  .then (response => {
-    setUsers(response.data);
-  })
-  .catch(error => {
-    console.error();
-  });
-
-  function createData(name, calories, fat, carbs, protein) {
-    return { name, calories, fat, carbs, protein };
-  }
-  
-
-
-  const rows = [
-    {"username": "a", "email": "a@b.com", "gender": "M"},
-    {"username": "b", "email": "a@bb.com", "gender": "M"},
-    {"username": "c", "email": "a@bc.com", "gender": "F"}
-  ];
+const TabPanel = (props) => {
+  const { children, value, index, ...other } = props;
 
   return (
-    <div> 
+    <div
+      role="tabpanel"
+      hidden={value !== index}
+      id={`simple-tabpanel-${index}`}
+      aria-labelledby={`simple-tab-${index}`}
+      {...other}
+    >
+      {value === index && (
+        <Box sx={{ p: 3 }}>
+          {children}
+        </Box>
+      )}
+    </div>
+  );
+};
+
+const HomePage = () => {
+  const [openEvents, setOpenEvents] = useState([]);
+  const [completedEvents, setCompletedEvents] = useState([]);
+  const [attendedEvents, setAttendedEvents] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [value, setValue] = useState(0);
+
+  const nav = useNavigate();
+
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const openData = await fetchEvents('OPEN');
+        setOpenEvents(openData.data);
+        const attendedData = await fetchAttendedEvents();
+        setAttendedEvents(attendedData.data);
+        const completedData = await fetchCompletedEvents(attendedData.data);
+        setCompletedEvents(completedData);
+        
+      } catch (error) {
+        console.error('Failed to fetch events:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchData();
+  }, []);
+
+  const fetchCompletedEvents = async (attendedE) => {
+    const completedData = await fetchEvents('COMPLETED');
+    // Add Earned Points column based on attendance
+    return completedData.data.map(event => ({
+      ...event,
+      earned_points: attendedE.includes(event.id) ? event.credit_points : 0
+    }));
+  };
+
+  const handleChange = (event, newValue) => {
+    setValue(newValue);
+  };
+
+  const handleRowClick = (eventId) => {
+    nav(`/event/${eventId}`);
+  };
+
+  const renderTable = (events) => (
     <TableContainer component={Paper}>
-      <Table sx={{ minWidth: 650 }} aria-label="simple table">
+      <Table>
         <TableHead>
           <TableRow>
-            <TableCell align="center">Username</TableCell>
-            <TableCell align="center">Email</TableCell>
-            <TableCell align="center">Gender</TableCell>
+            <TableCell>Name</TableCell>
+            <TableCell>Description</TableCell>
+            <TableCell>Start Date</TableCell>
+            <TableCell>Start Time</TableCell>
+            <TableCell>Location</TableCell>
+            <TableCell>Credit Points</TableCell>
+            {value === 1 && <TableCell>Earned Points</TableCell>}
           </TableRow>
         </TableHead>
         <TableBody>
-          {users.map((row) => (
-            <TableRow
-              key={row.username}
-              sx={{ '&:last-child td, &:last-child th': { border: 0 } }}
-            >
-              <TableCell align="center">{row.username}</TableCell>
-              <TableCell align="center">{row.email}</TableCell>
-              <TableCell align="center">{row.gender}</TableCell>
+          {events.map((event) => (
+            <TableRow key={event.id} onClick={() => handleRowClick(event.id)} style={{ cursor: 'pointer' }}>
+              <TableCell>{event.name}</TableCell>
+              <TableCell>{event.description}</TableCell>
+              <TableCell>{event.start_date}</TableCell>
+              <TableCell>{event.start_time}</TableCell>
+              <TableCell>{event.location}</TableCell>
+              <TableCell>{event.credit_points}</TableCell>
+              {value === 1 && <TableCell>{event.earned_points}</TableCell>}
             </TableRow>
           ))}
         </TableBody>
       </Table>
     </TableContainer>
-    </div>
   );
-}
 
-export default Home;
+  if (loading) {
+    return (
+      <Container sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh' }}>
+        <CircularProgress />
+      </Container>
+    );
+  }
+
+  return (
+    <Container>
+      <Box sx={{ borderBottom: 1, borderColor: 'divider' }}>
+        <Tabs value={value} onChange={handleChange} aria-label="event tabs">
+          <Tab label="Open Events" />
+          <Tab label="Completed Events" />
+        </Tabs>
+      </Box>
+      <TabPanel value={value} index={0}>
+        {openEvents && openEvents.length > 0 ? renderTable(openEvents) : <Typography>No Open Events</Typography>}
+      </TabPanel>
+      <TabPanel value={value} index={1}>
+        {completedEvents && completedEvents.length > 0 ? renderTable(completedEvents) : <Typography>No Completed Events</Typography>}
+      </TabPanel>
+    </Container>
+  );
+};
+
+export default HomePage;
