@@ -3,7 +3,7 @@ from rest_framework_simplejwt.views import (
     TokenObtainPairView,
     TokenRefreshView,
 )
-from .views import VolunteerAPIView, UserAPIView, CollegeAPIView, CollegeAdminAPIView, CoursesAPIView, LoggedInUserAPIView
+from .views import VolunteerAPIView, CollegeAPIView, CollegeAdminAPIView, CoursesAPIView, LoggedInUserAPIView
 
 urlpatterns = [
     path('login/', TokenObtainPairView.as_view()),
@@ -15,9 +15,6 @@ urlpatterns = [
 
     path('admin/volunteer/', VolunteerAPIView.as_view()),
     path('admin/volunteer/<int:volunteer_id>/', VolunteerAPIView.as_view()),
-
-    path('user/', UserAPIView.as_view()),
-    path('user/<int:user_id>/', UserAPIView.as_view()),
 
     path('college/', CollegeAPIView.as_view()),
     path('college/<int:college_id>/', CollegeAPIView.as_view()),

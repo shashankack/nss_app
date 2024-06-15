@@ -8,3 +8,5 @@ psycopg2-binary==2.9.9
 PyJWT==2.8.0
 sqlparse==0.5.0
 typing_extensions==4.11.0
+django-extensions
+pygraphviz

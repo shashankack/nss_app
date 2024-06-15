@@ -45,6 +45,7 @@ INSTALLED_APPS = [
     'rest_framework_simplejwt',
     'nss_profile',
     'nss_events',
+    'django_extensions'
 ]
 
 REST_FRAMEWORK = {

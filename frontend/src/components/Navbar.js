@@ -101,7 +101,7 @@ function ResponsiveAppBar() {
         component="div"
         sx={{ display: { xs: 'none', sm: 'block' }, ml: 2 }} // Adding margin-left to create space
       >
-        National College Basavanagudi {userProfile.college}
+        {userProfile.college}
       </Typography>
       <Typography
         variant="h6"
@@ -109,7 +109,7 @@ function ResponsiveAppBar() {
         component="div"
         sx={{ display: { xs: 'none', sm: 'block' }, ml: 2 }} // Adding margin-left to create space
       >
-       Volunteering Year : {userProfile.volunteering_year}
+       Volunteering Year : {userProfile.volunteering_year ? userProfile.volunteering_year.label: ''}
       </Typography>
     </Box>
       <Box sx={{ flexGrow: 1 }} />

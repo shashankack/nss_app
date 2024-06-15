@@ -43,7 +43,7 @@ const HomePage = () => {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const openData = await fetchEvents('OPEN');
+        const openData = await fetchEvents('Open');
         setOpenEvents(openData.data);
         const attendedData = await fetchAttendedEvents();
         setAttendedEvents(attendedData.data);
@@ -61,7 +61,7 @@ const HomePage = () => {
   }, []);
 
   const fetchCompletedEvents = async (attendedE) => {
-    const completedData = await fetchEvents('COMPLETED');
+    const completedData = await fetchEvents('Completed');
     // Add Earned Points column based on attendance
     return completedData.data.map(event => ({
       ...event,

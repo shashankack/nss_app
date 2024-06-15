@@ -5,15 +5,16 @@ from rest_framework.permissions import IsAuthenticated
 from nss_profile.permissions import IsCollegeAdmin
 from .serializers import EventSerializer, AttendanceSerializer
 from .models import Events, Attendance
-from nss_profile.models import VolunteerProfile
+from nss_profile.models import Volunteer
 from django.utils import timezone
 from datetime import datetime
 from django.db import IntegrityError
-
+from nss_profile.models import NSSYear
 
 class EventAPIView(APIView):
     permission_classes = [IsAuthenticated]
     def get(self, request, event_id=None):
+        event_status = request.GET.get('status')
         if event_id is not None:
             event = Events.objects.filter(id=event_id).first()
             if not event:
@@ -22,7 +23,7 @@ class EventAPIView(APIView):
             serializer = EventSerializer(event)
             return Response(serializer.data, status=status.HTTP_200_OK)
         else:
-            events = Events.objects.all()
+            events = Events.objects.filter(status=event_status)
             serializer = EventSerializer(events, many=True)
             return Response(serializer.data, status=status.HTTP_200_OK)
     
@@ -62,7 +63,7 @@ class EventAPIView(APIView):
         event = Events.objects.filter(event_id=event_id).first()
         if not event:
             return Response({'error':'event does not exist'}, status=status.HTTP_404_NOT_FOUND)
-        event.delete()
+        event.status = Events.DELETED
         return Response("Event deleted", status=status.HTTP_204_NO_CONTENT)
     
 
@@ -93,7 +94,7 @@ class AttendanceAPIView(APIView):
         
         attendances = []
         for volunteer_id in volunteer_ids:
-            volunteer = VolunteerProfile.objects.filter(id=volunteer_id).first()
+            volunteer = Volunteer.objects.filter(id=volunteer_id).first()
             if not volunteer:
                 return Response({'error':f'Volunteer {volunteer_id} not found'}, status=status.HTTP_404_NOT_FOUND)
             
@@ -105,8 +106,16 @@ class AttendanceAPIView(APIView):
             attendances.append(attendance)
         return Response(f'Attendance marked for {volunteer_ids}', status=status.HTTP_201_CREATED)
     
+    def delete(self, request, event_id):
+        # TODO : implement
+        pass
+    
 class EventsAttendedAPIView(APIView):
     permission_classes = [IsAuthenticated]
 
     def get(self, request):
-        return Response([2,3])
+        events = list(Attendance.objects.filter(volunteer__user_id=request.user.id,
+                                            volunteer__volunteering_year=NSSYear.current_year(),
+                                            ).select_related('event').values_list('event__id', flat=True))
+        return Response(events, status=status.HTTP_200_OK)
+        

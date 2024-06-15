@@ -1,5 +1,7 @@
+from datetime import datetime
 from django.db import models
 from django.contrib.auth.models import AbstractUser
+from django.utils.functional import cached_property
 
 class User(AbstractUser):
     BLOOD_GROUP_CHOICES = [
@@ -20,7 +22,7 @@ class User(AbstractUser):
     ]
 
     class Meta:
-        db_table = 'User'
+        db_table = 'Users'
 
     email = models.EmailField(unique=True)
     gender = models.CharField(max_length=1, choices=GENDER_CHOICES)
@@ -50,8 +52,8 @@ class CollegeCourses(models.Model):
     college = models.ForeignKey(College, on_delete=models.CASCADE)
     course_name = models.CharField(max_length=50)
     specialization = models.CharField(max_length=50, null=True)
-    year = models.IntegerField()
     status = models.IntegerField(choices=STATUS_CHOICE)
+
 
 class NSSYear(models.Model):
     class Meta:
@@ -61,8 +63,20 @@ class NSSYear(models.Model):
     end_date = models.DateField()
     label = models.CharField(max_length=9)
 
+    @classmethod
+    def current_year(cls):
+        now = datetime.now().date()
+        try:
+            return cls.objects.get(start_date__lte=now, end_date__gte=now)
+        except cls.DoesNotExist:
+            return None
+
+    def __str__(self):
+        return self.label
+
+
 #Details in this table will change every year
-class VolunteerProfile(models.Model):
+class Volunteer(models.Model):
     LEADER = 'Leader'
     VOLUNTEER = 'Volunteer'
 
@@ -72,10 +86,11 @@ class VolunteerProfile(models.Model):
     ]
 
     class Meta:
-        db_table = 'VolunteerProfile'
+        db_table = 'Volunteer'
 
     user = models.ForeignKey(User, on_delete=models.CASCADE)
     course = models.ForeignKey(CollegeCourses, on_delete=models.CASCADE)
+    course_year = models.IntegerField()
     volunteering_year = models.ForeignKey(NSSYear, on_delete=models.CASCADE)
     role = models.CharField(max_length=20, choices=ROLE_CHOICES, default='Volunteer')
 
@@ -87,6 +102,3 @@ class CollegeAdmin(models.Model):
      
     user = models.ForeignKey(User, on_delete=models.CASCADE)
     college  = models.ForeignKey(College, on_delete=models.CASCADE)
-
-
- 
