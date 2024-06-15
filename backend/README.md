@@ -40,50 +40,44 @@
 
 
 ### /api/user/  (ToDo)
-    - POST: 
+    - POST: {
+        "username": "",
+        "email": "",
+        "password": "",
+        "gender": "",
+        "blood_group": ""
+        "is_admin"
+    }
 
-### /api/college-admin/ (ToDo)
-- POST: 
+### /api/college-admin/ (Done)
+- The users in this table will be considered as the college admin for that college
+- POST: {
+    "user": "user_id",
+    "college": "college_id"
+}
+- PUT:
 - permission = [isAdmin]
 
-### /api/college/ (ToDo)
+### /api/college/ :College Model | CollegeAPIView
 - POST: 
+    {
+        "college_name" : "",
+        "college_code" : "",
+        "city": "",
+    }
 - GET:
 - PUT:
 - DELETE:
 -permission = [isAdmin]
 
-### /api/courses/ (ToDo)
-- POST:  [isAdmin]
+### /api/courses/ :CollegeCourses Model | CoursesAPIView
+- POST:  [isAdmin] {
+    "college" : college_id,
+    "course" : "course_name",
+    "specialization" : "",
+    "year" : 20__,
+    "status" = "active/inactive, 0/1"
+}
 - GET:
 - PUT:  [isAdmin]
 - DELETE:   [isAdmin]
-
-
-
-
-### /api/loggedinuser/
-{
-"username": "",
-"fn": "",
-"ln": "",
-"college": "",
-"course":"",
-"year": "",
-"role": "CollegeAdmin/Volunteer/Lead",
-}
-
-if isCollegeAdmin()
- return new CollegeAdmin
- else :
-
-
-
-Navbar {
-    Logo
-    College Name
-    
-    LoggedInUser {
-
-    }
-}

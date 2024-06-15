@@ -1,6 +1,5 @@
 from rest_framework import serializers
-from .models import VolunteerProfile, User
-from django.contrib.auth.hashers import make_password
+from .models import VolunteerProfile, User, College, CollegeAdmin, CollegeCourses
 
 class VolunteerProfileSerializer(serializers.ModelSerializer):
     username = serializers.CharField(source='user.username', read_only=True)
@@ -12,14 +11,9 @@ class VolunteerProfileSerializer(serializers.ModelSerializer):
         model = VolunteerProfile
         fields = '__all__'
     def create(self, validated_data):
-        volunteer = VolunteerProfile.objects.create_volunteer(**validated_data)
+        volunteer = VolunteerProfile.objects.create(**validated_data)
         return volunteer
         
-
-class LoggedInUserSerializer(serializers.Serializer):
-    class Meta:
-        model = User
-        fields = '__all__'
 
 
 class UserSerializer(serializers.ModelSerializer):
@@ -28,12 +22,37 @@ class UserSerializer(serializers.ModelSerializer):
         fields = '__all__'
 
     def create(self, validated_data):
+        user = User.objects.create(**validated_data)
         password = validated_data.pop('password', None)
         if password:
-            validated_data['password'] = make_password(password)
-        else:
-            validated_data.pop('password', None)
-        user = User.objects.create_user(**validated_data)
-        return user
-            
+            user.set_password(password)
+        user.save()
+        return user 
+        
+class CollegeAdminSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = CollegeAdmin
+        fields = '__all__'
 
+    def create(self, validated_data):
+        admin = CollegeAdmin.objects.create(**validated_data)
+        return admin
+    
+
+class CollegeSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = College
+        fields = '__all__'
+    
+    def create(self, validated_data):
+        college = College.objects.create(**validated_data)
+        return college
+    
+class CollegeCoursesSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = CollegeCourses
+        fields = '__all__'
+
+    def create(self, validated_data):
+        course = CollegeCourses.objects.create(**validated_data)
+        return course

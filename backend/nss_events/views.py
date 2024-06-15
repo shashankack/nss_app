@@ -15,7 +15,7 @@ class EventAPIView(APIView):
     permission_classes = [IsAuthenticated]
     def get(self, request, event_id=None):
         if event_id is not None:
-            event = Events.objects.filter(event_id=event_id).first()
+            event = Events.objects.filter(id=event_id).first()
             if not event:
                 return Response("Event does not exist", status=status.HTTP_404_NOT_FOUND)
             
@@ -104,3 +104,9 @@ class AttendanceAPIView(APIView):
             attendance = Attendance.objects.create(volunteer=volunteer, event=event)
             attendances.append(attendance)
         return Response(f'Attendance marked for {volunteer_ids}', status=status.HTTP_201_CREATED)
+    
+class EventsAttendedAPIView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        return Response([2,3])
