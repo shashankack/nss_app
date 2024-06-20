@@ -48,8 +48,7 @@ const HomePage = () => {
         const attendedData = await fetchAttendedEvents();
         setAttendedEvents(attendedData.data);
         const completedData = await fetchCompletedEvents(attendedData.data);
-        setCompletedEvents(completedData);
-        
+        setCompletedEvents(completedData);        
       } catch (error) {
         console.error('Failed to fetch events:', error);
       } finally {
@@ -96,8 +95,8 @@ const HomePage = () => {
             <TableRow key={event.id} onClick={() => handleRowClick(event.id)} style={{ cursor: 'pointer' }}>
               <TableCell>{event.name}</TableCell>
               <TableCell>{event.description}</TableCell>
-              <TableCell>{event.start_date}</TableCell>
-              <TableCell>{event.start_time}</TableCell>
+              <TableCell>{event.formatted_date}</TableCell>
+              <TableCell>{event.formatted_time}</TableCell>
               <TableCell>{event.location}</TableCell>
               <TableCell>{event.credit_points}</TableCell>
               {value === 1 && <TableCell>{event.earned_points}</TableCell>}

@@ -43,10 +43,14 @@ const EventDetailPage = () => {
     <Container>
       <Typography variant="h4">{event.name}</Typography>
       <Typography variant="body1">{event.description}</Typography>
-      <Typography variant="body2">Start Date: {event.start_date}</Typography>
-      <Typography variant="body2">Start Time: {event.start_time}</Typography>
+      <Typography variant="body1">Instructions: {event.instructions}</Typography>
+      <Typography variant="body2">Start Date: {event.formatted_date}</Typography>
+      <Typography variant="body2">Start Time: {event.formatted_time}</Typography>
       {/* Render other event details as needed */}
+      
+
     </Container>
+    
   );
 };
 
