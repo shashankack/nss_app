@@ -5,33 +5,26 @@ import Toolbar from '@mui/material/Toolbar';
 import IconButton from '@mui/material/IconButton';
 import Typography from '@mui/material/Typography';
 import Menu from '@mui/material/Menu';
-import MenuIcon from '@mui/icons-material/Menu';
-import Container from '@mui/material/Container';
 import Avatar from '@mui/material/Avatar';
-import Button from '@mui/material/Button';
+import SvgIcon from '@mui/material/SvgIcon';
 import Tooltip from '@mui/material/Tooltip';
 import MenuItem from '@mui/material/MenuItem';
-import AdbIcon from '@mui/icons-material/Adb';
-import {  useLocation, useNavigate } from 'react-router-dom';
-import api from '../utils/api'
-import { clearTokens } from '../utils/auth'
-import axios from 'axios';
+import { useLocation, useNavigate } from 'react-router-dom';
+import api from '../utils/api';
+import { clearTokens } from '../utils/auth';
 import Badge from '@mui/material/Badge';
 import GradeIcon from '@mui/icons-material/Grade';
-import logo from '../assets/nss_logo.png';
-
-
-
+import logo from '../assets/nss_logo.png'; // Ensure this is a high-resolution image
+import CreditIcon from '../assets/credits_earned_dark.png'
 function ResponsiveAppBar() {
   const location = useLocation();
-  const isNotLoginPage = location.pathname != '/login';
+  const isNotLoginPage = location.pathname !== '/login';
   const nav = useNavigate();
-    
+  
   const [anchorElNav, setAnchorElNav] = React.useState(null);
   const [anchorElUser, setAnchorElUser] = React.useState(null);
   const [firstName, setFirstName] = React.useState('');
   const [userProfile, setUserProfile] = React.useState({});
-
 
   const getInitials = (firstName, lastName) => {
     if (firstName && lastName) {
@@ -43,9 +36,9 @@ function ResponsiveAppBar() {
   React.useEffect(() => {
     if (isNotLoginPage) {
       api.get('/loggedinuser/')
-      .then (response => {
+      .then(response => {
         setUserProfile(response.data);
-        console.log(userProfile)
+        console.log(userProfile);
       })
       .catch(error => {
         console.error();
@@ -54,112 +47,121 @@ function ResponsiveAppBar() {
   }, [isNotLoginPage]);
 
   const handleOpenNavMenu = (event) => {
-    console.log(userProfile)
+    console.log(userProfile);
     setAnchorElNav(event.currentTarget);
   };
+  
   const handleOpenUserMenu = (event) => {
     setAnchorElUser(event.currentTarget);
   };
+
   const goHome = () => {
-    nav("/")
-  }
+    nav("/");
+  };
 
   const handleProfileView = () => {
     nav("/profile");
   };
+
   const handleLogout = () => {
     handleCloseUserMenu();
     clearTokens();
     nav("/login");
-  }
+  };
+
   const handleCloseUserMenu = () => {
     setAnchorElUser(null);
   };
 
   return (
     isNotLoginPage && 
-    <AppBar position="static">
-    <Toolbar>
-    <Box display="flex" alignItems="center">
-      <IconButton
-        size="large"
-        edge="end"
-        aria-label="company logo"
-        aria-haspopup="true"
-        color="inherit"
-        onClick={goHome}
-      >
-        <Avatar
-          src={logo} // URL of the logo image
-          alt="NSS" // Alt text for accessibility
-          variant="square" // Use square variant for logos
-        />
-      </IconButton>
-      <Typography
-        variant="h6"
-        noWrap
-        component="div"
-        sx={{ display: { xs: 'none', sm: 'block' }, ml: 2 }} // Adding margin-left to create space
-      >
-        {userProfile.college}
-      </Typography>
-      <Typography
-        variant="h6"
-        noWrap
-        component="div"
-        sx={{ display: { xs: 'none', sm: 'block' }, ml: 2 }} // Adding margin-left to create space
-      >
-       Volunteering Year : {userProfile.volunteering_year ? userProfile.volunteering_year.label: ''}
-      </Typography>
-    </Box>
-      <Box sx={{ flexGrow: 1 }} />
-      <Box sx={{ display: { xs: 'none', md: 'flex' } }}>
-
-        <IconButton
-          size="large"
-          aria-label="show 17 new notifications"
-          color="inherit"
-        >
-          <Badge badgeContent={userProfile.credits_earned} color="error">
-            <GradeIcon />
-          </Badge>
-        </IconButton>
-
-      </Box>
-      <Box sx={{ flexGrow: 0 }}>
-            <Tooltip title="Open settings">
-              <IconButton onClick={handleOpenUserMenu} sx={{ p: 0 }}>
-                <Avatar alt={userProfile.first_name + " " + userProfile.last_name} src="/static/images/avatar/2.jpg">{getInitials(userProfile.first_name, userProfile.last_name)}</Avatar> 
-              </IconButton>
-            </Tooltip>
-            <Menu
-              sx={{ mt: '45px' }}
-              id="menu-appbar"
-              anchorEl={anchorElUser}
-              anchorOrigin={{
-                vertical: 'top',
-                horizontal: 'right',
-              }}
-              keepMounted
-              transformOrigin={{
-                vertical: 'top',
-                horizontal: 'right',
-              }}
-              open={Boolean(anchorElUser)}
-              onClose={handleCloseUserMenu}
-            >
-                <MenuItem key="profile" onClick={handleProfileView}>
-                  <Typography textAlign="center">My Profile</Typography>
-                </MenuItem>
-                <MenuItem key="logout" onClick={handleLogout}>
-                  <Typography textAlign="center">Logout</Typography>
-                </MenuItem>
-
-            </Menu>
-          </Box>
-
-    </Toolbar>
-  </AppBar>
+    <AppBar position="static" sx={{ height: 70 }}>
+      <Toolbar>
+        <Box display="flex" alignItems="center">
+          <IconButton
+            edge="end"
+            aria-haspopup="true"
+            color="inherit"
+            onClick={goHome}
+            sx={{
+              '&:hover': {
+                backgroundColor: 'Transparent', // disable hover effect
+              },
+            }}
+          >
+            <Avatar
+              src={logo}
+              alt="NSS"
+              variant="square"
+              sx={{ width: 65, height: 65, mt:.3, mr:5 }} // Adjust the size as needed
+            />
+          </IconButton>
+          <Typography
+            fontFamily='custom-font'
+            fontSize = '1.5rem'
+            variant="h6"
+            noWrap
+            component="div"
+            sx={{ display: { xs: 'none', sm: 'block' }, ml: 10, mt:.5 }}
+          >
+            {userProfile.college}
+          </Typography>
+          <Typography
+            fontFamily='custom-font'
+            fontSize='1.5rem'
+            variant="h6"
+            noWrap
+            component="div"
+            sx={{ display: { xs: 'none', sm: 'block' }, ml: 20, mt:.5 }}
+          >
+            Volunteering Year: {userProfile.volunteering_year ? userProfile.volunteering_year.label : ''}
+          </Typography>
+        </Box>
+        <Box sx={{ flexGrow: 1 }} />
+        <Box sx={{ display: { xs: 'none', md: 'flex' }, mr:2, mt:.5 }}>
+          <Tooltip title="Credit Points">
+            <IconButton
+              size="large"
+              color="inherit">
+              <Badge badgeContent={userProfile.credits_earned} color="error">
+                <Avatar src={CreditIcon}/>
+              </Badge>
+            </IconButton>
+          </Tooltip>
+        </Box>
+        <Box sx={{ flexGrow: 0 }}>
+          <Tooltip title="Open Settings">
+            <IconButton onClick={handleOpenUserMenu} sx={{ p: 0 }}>
+              <Avatar alt={userProfile.first_name + " " + userProfile.last_name} src="/static/images/avatar/2.jpg">{getInitials(userProfile.first_name, userProfile.last_name)}</Avatar> 
+            </IconButton>
+          </Tooltip>
+          <Menu
+            sx={{ mt: '45px' }}
+            id="menu-appbar"
+            anchorEl={anchorElUser}
+            anchorOrigin={{
+              vertical: 'top',
+              horizontal: 'right',
+            }}
+            keepMounted
+            transformOrigin={{
+              vertical: 'top',
+              horizontal: 'right',
+            }}
+            open={Boolean(anchorElUser)}
+            onClose={handleCloseUserMenu}
+          >
+            <MenuItem key="profile" onClick={handleProfileView}>
+              <Typography textAlign="center">My Profile</Typography>
+            </MenuItem>
+            <MenuItem key="logout" onClick={handleLogout}>
+              <Typography textAlign="center">Logout</Typography>
+            </MenuItem>
+          </Menu>
+        </Box>
+      </Toolbar>
+    </AppBar>
   );
 }
+
 export default ResponsiveAppBar;
