@@ -5,7 +5,9 @@ import {
   DialogTitle, TextField, IconButton, Alert
 } from '@mui/material';
 import EditIcon from '@mui/icons-material/Edit';
+import AddIcon from '@mui/icons-material/Add';
 import DeleteIcon from '@mui/icons-material/Delete';
+
 import { useNavigate } from 'react-router-dom';
 import api from '../utils/api';
 
@@ -44,7 +46,8 @@ const HomePage = () => {
   const [newEvent, setNewEvent] = useState({
     name: '',
     description: '',
-    start_date_time: '',
+    start_date: '',
+    start_time: '',
     location: '',
     creditPoints: '',
     instructions: '',
@@ -109,6 +112,7 @@ const HomePage = () => {
   const renderTable = (events) => (
     <TableContainer
       component={Paper}
+      elevation={24}
       sx={{
         maxHeight: 400,
         overflowY: 'auto',
@@ -266,6 +270,7 @@ const HomePage = () => {
           justifyContent: 'space-between',
           alignItems: 'center',
           mt: 20,
+          borderRadius:2
         }}
       >
         <Tabs value={value} onChange={handleChange} aria-label="event tabs">
@@ -277,6 +282,7 @@ const HomePage = () => {
           color="primary"
           onClick={handleOpenDialog}
           sx={{ mr: 10 }}
+          startIcon={<AddIcon/>}
         >
           New Event
         </Button>
@@ -318,8 +324,19 @@ const HomePage = () => {
           />
           <TextField
             margin="dense"
-            name="start_date_time"
-            label="Start Date and Time"
+            name="start_date"
+            label="Start Date"
+            type="datetime-local"
+            fullWidth
+            value={newEvent.start_date_time}
+            onChange={handleInputChange}
+            error={!!errors.start_date_time}
+            helperText={errors.start_date_time}
+          />
+          <TextField
+            margin="dense"
+            name="start_time"
+            label="Start Time"
             type="datetime-local"
             fullWidth
             value={newEvent.start_date_time}
