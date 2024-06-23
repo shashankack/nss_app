@@ -1,8 +1,12 @@
 import React, { useState, useEffect } from 'react';
-import { Container, Tabs, Tab, Box, Typography, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper, CircularProgress, Button, Dialog, DialogActions, DialogContent, DialogContentText, DialogTitle, TextField, IconButton } from '@mui/material';
+import {
+  Container, Tabs, Tab, Box, Typography, Table, TableBody, TableCell, TableContainer, TableHead,
+  TableRow, Paper, CircularProgress, Button, Dialog, DialogActions, DialogContent, DialogContentText,
+  DialogTitle, TextField, IconButton, Alert
+} from '@mui/material';
 import EditIcon from '@mui/icons-material/Edit';
 import DeleteIcon from '@mui/icons-material/Delete';
-import { useNavigate } from 'react-router-dom'; // Assuming you are using React Router for navigation
+import { useNavigate } from 'react-router-dom';
 import api from '../utils/api';
 
 const fetchEvents = async (status) => {
@@ -24,11 +28,7 @@ const TabPanel = (props) => {
       aria-labelledby={`simple-tab-${index}`}
       {...other}
     >
-      {value === index && (
-        <Box sx={{ p: 3 }}>
-          {children}
-        </Box>
-      )}
+      {value === index && <Box sx={{ p: 3 }}>{children}</Box>}
     </div>
   );
 };
@@ -41,8 +41,18 @@ const HomePage = () => {
   const [value, setValue] = useState(0);
   const [openDialog, setOpenDialog] = useState(false);
   const [editDialog, setEditDialog] = useState(false);
-  const [newEvent, setNewEvent] = useState({ name: '', description: '', start_date_time: '', location: '', creditPoints: '' });
+  const [newEvent, setNewEvent] = useState({
+    name: '',
+    description: '',
+    start_date_time: '',
+    location: '',
+    creditPoints: '',
+    instructions: '',
+    duration: '',
+  });
   const [selectedEvent, setSelectedEvent] = useState({});
+  const [errors, setErrors] = useState({});
+  const [editErrors, setEditErrors] = useState({});
 
   const nav = useNavigate();
 
@@ -54,7 +64,7 @@ const HomePage = () => {
         const attendedData = await fetchAttendedEvents();
         setAttendedEvents(attendedData.data);
         const completedData = await fetchCompletedEvents(attendedData.data);
-        setCompletedEvents(completedData);        
+        setCompletedEvents(completedData);
       } catch (error) {
         console.error('Failed to fetch events:', error);
       } finally {
@@ -67,9 +77,9 @@ const HomePage = () => {
 
   const fetchCompletedEvents = async (attendedE) => {
     const completedData = await fetchEvents('Completed');
-    return completedData.data.map(event => ({
+    return completedData.data.map((event) => ({
       ...event,
-      earned_points: attendedE.includes(event.id) ? event.credit_points : 0
+      earned_points: attendedE.includes(event.id) ? event.credit_points : 0,
     }));
   };
 
@@ -89,7 +99,7 @@ const HomePage = () => {
   const handleDelete = async (eventId) => {
     try {
       await api.delete(`/event/${eventId}`);
-      setOpenEvents(openEvents.filter(event => event.id !== eventId));
+      setOpenEvents(openEvents.filter((event) => event.id !== eventId));
       console.log('Event deleted successfully');
     } catch (error) {
       console.error('Failed to delete event:', error);
@@ -97,9 +107,20 @@ const HomePage = () => {
   };
 
   const renderTable = (events) => (
-    <TableContainer component={Paper}>
-      <Table>
-        <TableHead>
+    <TableContainer
+      component={Paper}
+      sx={{
+        maxHeight: 400,
+        overflowY: 'auto',
+        '&::-webkit-scrollbar': { display: 'none' },
+      }}
+    >
+      <Table stickyHeader>
+        <TableHead
+          sx={{
+            '& th': { backgroundColor: 'primary.main', color: 'white' },
+          }}
+        >
           <TableRow>
             <TableCell>Name</TableCell>
             <TableCell>Description</TableCell>
@@ -112,8 +133,19 @@ const HomePage = () => {
           </TableRow>
         </TableHead>
         <TableBody>
-          {events.map((event) => (
-            <TableRow key={event.id} style={{ cursor: 'pointer' }}>
+          {events.slice(0, 5).map((event) => (
+            <TableRow
+              key={event.id}
+              style={{ cursor: 'pointer' }}
+              onMouseEnter={(e) => {
+                if (!e.target.closest('IconButton')) {
+                  e.target.parentNode.style.backgroundColor = '#f5f5f5';
+                }
+              }}
+              onMouseLeave={(e) => {
+                e.target.parentNode.style.backgroundColor = 'inherit';
+              }}
+            >
               <TableCell onClick={() => handleRowClick(event.id)}>{event.name}</TableCell>
               <TableCell onClick={() => handleRowClick(event.id)}>{event.description}</TableCell>
               <TableCell onClick={() => handleRowClick(event.id)}>{event.formatted_date}</TableCell>
@@ -125,7 +157,10 @@ const HomePage = () => {
                   <IconButton color="primary" onClick={() => handleEdit(event)}>
                     <EditIcon />
                   </IconButton>
-                  <IconButton sx={{ color: 'rgb(198, 40, 40)' }} onClick={() => handleDelete(event.id)}>
+                  <IconButton
+                    sx={{ color: 'rgb(198, 40, 50)' }}
+                    onClick={() => handleDelete(event.id)}
+                  >
                     <DeleteIcon />
                   </IconButton>
                 </TableCell>
@@ -138,16 +173,31 @@ const HomePage = () => {
     </TableContainer>
   );
 
+  const validateForm = (event) => {
+    const newErrors = {};
+    if (!event.name) newErrors.name = 'Event name is required';
+    if (!event.description) newErrors.description = 'Event description is required';
+    if (!event.start_date_time) newErrors.start_date_time = 'Start date and time are required';
+    if (!event.location) newErrors.location = 'Event location is required';
+    if (!event.creditPoints) newErrors.creditPoints = 'Credit points are required';
+    if (!event.instructions) newErrors.instructions = 'Instructions are required';
+    if (!event.duration) newErrors.duration = 'Duration is required';
+
+    return newErrors;
+  };
+
   const handleOpenDialog = () => {
     setOpenDialog(true);
   };
 
   const handleCloseDialog = () => {
     setOpenDialog(false);
+    setErrors({});
   };
 
   const handleCloseEditDialog = () => {
     setEditDialog(false);
+    setEditErrors({});
   };
 
   const handleInputChange = (event) => {
@@ -162,8 +212,14 @@ const HomePage = () => {
 
   const handleSubmit = async (event) => {
     event.preventDefault();
+    const newErrors = validateForm(newEvent);
+    if (Object.keys(newErrors).length > 0) {
+      setErrors(newErrors);
+      return;
+    }
+
     try {
-      const response = await api.post('/event', newEvent);
+      const response = await api.post('/event/', newEvent);
       console.log('Event created successfully:', response.data);
       handleCloseDialog();
       // Optionally, refresh the event lists
@@ -174,6 +230,7 @@ const HomePage = () => {
 
   const handleEditSubmit = async (event) => {
     event.preventDefault();
+
     try {
       const response = await api.put(`/event/${selectedEvent.id}`, selectedEvent);
       console.log('Event updated successfully:', response.data);
@@ -186,7 +243,14 @@ const HomePage = () => {
 
   if (loading) {
     return (
-      <Container sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh' }}>
+      <Container
+        sx={{
+          display: 'flex',
+          justifyContent: 'center',
+          alignItems: 'center',
+          height: '100vh',
+        }}
+      >
         <CircularProgress />
       </Container>
     );
@@ -194,25 +258,40 @@ const HomePage = () => {
 
   return (
     <Container>
-      <Box sx={{ borderBottom: 1, borderColor: 'divider', display: 'flex', justifyContent: 'space-between', alignItems: 'center', mt:20, maxHeight:400 }}>
+      <Box
+        sx={{
+          borderBottom: 1,
+          borderColor: 'divider',
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          mt: 20,
+        }}
+      >
         <Tabs value={value} onChange={handleChange} aria-label="event tabs">
           <Tab label="Open Events" />
           <Tab label="Completed Events" />
         </Tabs>
-        <Button variant="contained" color="primary" onClick={handleOpenDialog} sx={{mr:10}}>New Event</Button>
+        <Button
+          variant="contained"
+          color="primary"
+          onClick={handleOpenDialog}
+          sx={{ mr: 10 }}
+        >
+          New Event
+        </Button>
       </Box>
       <TabPanel value={value} index={0}>
-        {openEvents && openEvents.length > 0 ? renderTable(openEvents) : <Typography>No Open Events</Typography>}
+        {renderTable(openEvents)}
       </TabPanel>
       <TabPanel value={value} index={1}>
-        {completedEvents && completedEvents.length > 0 ? renderTable(completedEvents) : <Typography>No Completed Events</Typography>}
+        {renderTable(completedEvents)}
       </TabPanel>
-
       <Dialog open={openDialog} onClose={handleCloseDialog}>
-        <DialogTitle>Create New Event</DialogTitle>
+        <DialogTitle>New Event</DialogTitle>
         <DialogContent>
           <DialogContentText>
-            To create a new event, please fill out the form below.
+            Please fill in the details of the new event.
           </DialogContentText>
           <TextField
             autoFocus
@@ -223,43 +302,41 @@ const HomePage = () => {
             fullWidth
             value={newEvent.name}
             onChange={handleInputChange}
+            error={!!errors.name}
+            helperText={errors.name}
           />
           <TextField
             margin="dense"
             name="description"
-            label="Description"
+            label="Event Description"
             type="text"
             fullWidth
             value={newEvent.description}
             onChange={handleInputChange}
+            error={!!errors.description}
+            helperText={errors.description}
           />
           <TextField
             margin="dense"
-            name="instructions"
-            label="Instructions"
-            type="text"
-            fullWidth
-            value={newEvent.instructions}
-            onChange={handleInputChange}
-          />
-          <TextField
-            margin="dense"
-            name="datetime"
-            label="Date & Time"
+            name="start_date_time"
+            label="Start Date and Time"
             type="datetime-local"
             fullWidth
-            InputLabelProps={{ shrink: true }}
             value={newEvent.start_date_time}
             onChange={handleInputChange}
+            error={!!errors.start_date_time}
+            helperText={errors.start_date_time}
           />
           <TextField
             margin="dense"
             name="location"
-            label="Location"
+            label="Event Location"
             type="text"
             fullWidth
             value={newEvent.location}
             onChange={handleInputChange}
+            error={!!errors.location}
+            helperText={errors.location}
           />
           <TextField
             margin="dense"
@@ -269,6 +346,19 @@ const HomePage = () => {
             fullWidth
             value={newEvent.creditPoints}
             onChange={handleInputChange}
+            error={!!errors.creditPoints}
+            helperText={errors.creditPoints}
+          />
+          <TextField
+            margin="dense"
+            name="instructions"
+            label="Instructions"
+            type="text"
+            fullWidth
+            value={newEvent.instructions}
+            onChange={handleInputChange}
+            error={!!errors.instructions}
+            helperText={errors.instructions}
           />
           <TextField
             margin="dense"
@@ -278,6 +368,8 @@ const HomePage = () => {
             fullWidth
             value={newEvent.duration}
             onChange={handleInputChange}
+            error={!!errors.duration}
+            helperText={errors.duration}
           />
         </DialogContent>
         <DialogActions>
@@ -289,12 +381,11 @@ const HomePage = () => {
           </Button>
         </DialogActions>
       </Dialog>
-
       <Dialog open={editDialog} onClose={handleCloseEditDialog}>
         <DialogTitle>Edit Event</DialogTitle>
         <DialogContent>
           <DialogContentText>
-            To edit this event, please update the form below.
+            Please edit the details of the event.
           </DialogContentText>
           <TextField
             autoFocus
@@ -305,15 +396,52 @@ const HomePage = () => {
             fullWidth
             value={selectedEvent.name}
             onChange={handleEditInputChange}
+            error={!!editErrors.name}
+            helperText={editErrors.name}
           />
           <TextField
             margin="dense"
             name="description"
-            label="Description"
+            label="Event Description"
             type="text"
             fullWidth
             value={selectedEvent.description}
             onChange={handleEditInputChange}
+            error={!!editErrors.description}
+            helperText={editErrors.description}
+          />
+          <TextField
+            margin="dense"
+            name="start_date_time"
+            label="Start Date and Time"
+            type="datetime-local"
+            fullWidth
+            value={selectedEvent.start_date_time}
+            onChange={handleEditInputChange}
+            error={!!editErrors.start_date_time}
+            helperText={editErrors.start_date_time}
+          />
+          <TextField
+            margin="dense"
+            name="location"
+            label="Event Location"
+            type="text"
+            fullWidth
+            value={selectedEvent.location}
+            onChange={handleEditInputChange}
+            error={!!editErrors.location}
+            helperText={editErrors.location}
+          />
+          <TextField
+            margin="dense"
+            name="creditPoints"
+            label="Credit Points"
+            type="number"
+            fullWidth
+            value={selectedEvent.credit_points}
+            onChange={handleEditInputChange}
+            error={!!editErrors.creditPoints}
+            helperText={editErrors.creditPoints}
           />
           <TextField
             margin="dense"
@@ -323,34 +451,8 @@ const HomePage = () => {
             fullWidth
             value={selectedEvent.instructions}
             onChange={handleEditInputChange}
-          />
-          <TextField
-            margin="dense"
-            name="datetime"
-            label="Date & Time"
-            type="datetime-local"
-            fullWidth
-            InputLabelProps={{ shrink: true }}
-            value={selectedEvent.start_date_time}
-            onChange={handleEditInputChange}
-          />
-          <TextField
-            margin="dense"
-            name="location"
-            label="Location"
-            type="text"
-            fullWidth
-            value={selectedEvent.location}
-            onChange={handleEditInputChange}
-          />
-          <TextField
-            margin="dense"
-            name="creditPoints"
-            label="Credit Points"
-            type="number"
-            fullWidth
-            value={selectedEvent.creditPoints}
-            onChange={handleEditInputChange}
+            error={!!editErrors.instructions}
+            helperText={editErrors.instructions}
           />
           <TextField
             margin="dense"
@@ -360,6 +462,8 @@ const HomePage = () => {
             fullWidth
             value={selectedEvent.duration}
             onChange={handleEditInputChange}
+            error={!!editErrors.duration}
+            helperText={editErrors.duration}
           />
         </DialogContent>
         <DialogActions>
