@@ -136,7 +136,7 @@ const HomePage = () => {
             {value === 1 && <TableCell>Earned Points</TableCell>}
           </TableRow>
         </TableHead>
-        <TableBody>
+        <TableBody >
           {events.slice(0, 5).map((event) => (
             <TableRow
               key={event.id}
@@ -159,13 +159,13 @@ const HomePage = () => {
               {value === 0 && (
                 <TableCell>
                   <IconButton color="primary" onClick={() => handleEdit(event)}>
-                    <EditIcon />
+                    <EditIcon sx={{mt:-2, mb:-2}}/>
                   </IconButton>
                   <IconButton
                     sx={{ color: 'rgb(198, 40, 50)' }}
                     onClick={() => handleDelete(event.id)}
                   >
-                    <DeleteIcon />
+                    <DeleteIcon sx={{mt:-2, mb:-2}}/>
                   </IconButton>
                 </TableCell>
               )}
