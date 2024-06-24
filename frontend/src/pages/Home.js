@@ -152,8 +152,8 @@ const HomePage = () => {
             >
               <TableCell onClick={() => handleRowClick(event.id)}>{event.name}</TableCell>
               <TableCell onClick={() => handleRowClick(event.id)}>{event.description}</TableCell>
-              <TableCell onClick={() => handleRowClick(event.id)}>{event.formatted_date}</TableCell>
-              <TableCell onClick={() => handleRowClick(event.id)}>{event.formatted_time}</TableCell>
+              <TableCell onClick={() => handleRowClick(event.id)}>{event.start_date}</TableCell>
+              <TableCell onClick={() => handleRowClick(event.id)}>{event.start_time}</TableCell>
               <TableCell onClick={() => handleRowClick(event.id)}>{event.location}</TableCell>
               <TableCell onClick={() => handleRowClick(event.id)}>{event.credit_points}</TableCell>
               {value === 0 && (
@@ -181,7 +181,8 @@ const HomePage = () => {
     const newErrors = {};
     if (!event.name) newErrors.name = 'Event name is required';
     if (!event.description) newErrors.description = 'Event description is required';
-    if (!event.start_date_time) newErrors.start_date_time = 'Start date and time are required';
+    if (!event.start_date) newErrors.start_date = 'Start date is required';
+    if (!event.start_time) newErrors.start_time = 'Start time is required';
     if (!event.location) newErrors.location = 'Event location is required';
     if (!event.creditPoints) newErrors.creditPoints = 'Credit points are required';
     if (!event.instructions) newErrors.instructions = 'Instructions are required';
@@ -328,10 +329,10 @@ const HomePage = () => {
             label="Start Date"
             type="datetime-local"
             fullWidth
-            value={newEvent.start_date_time}
+            value={newEvent.start_date}
             onChange={handleInputChange}
-            error={!!errors.start_date_time}
-            helperText={errors.start_date_time}
+            error={!!errors.start_date}
+            helperText={errors.start_date}
           />
           <TextField
             margin="dense"
@@ -339,10 +340,10 @@ const HomePage = () => {
             label="Start Time"
             type="datetime-local"
             fullWidth
-            value={newEvent.start_date_time}
+            value={newEvent.start_time}
             onChange={handleInputChange}
-            error={!!errors.start_date_time}
-            helperText={errors.start_date_time}
+            error={!!errors.start_time}
+            helperText={errors.start_time}
           />
           <TextField
             margin="dense"
