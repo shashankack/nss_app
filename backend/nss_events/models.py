@@ -23,11 +23,11 @@ class Events(models.Model):
     college = models.ForeignKey(College, on_delete=models.CASCADE)
     description = models.TextField()
     instructions = models.TextField()
-    start_date = models.DateField(default=timezone.now().strftime('%d-%m-%y'))
-    start_time = models.TimeField(default=timezone.now().strftime('%H:%M:%S'))
+    start_datetime = models.DateTimeField()
+    end_datetime = models.DateTimeField()
     duration = models.TextField()
     location = models.CharField(max_length=250)
-    status = models.CharField(choices=STATUS_CHOICES)
+    status = models.CharField(choices=STATUS_CHOICES, default=STATUS_OPEN)
     credit_points = models.IntegerField(null=True)
 
 

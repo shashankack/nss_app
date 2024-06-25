@@ -27,23 +27,9 @@ class EventAPIView(APIView):
             serializer = EventSerializer(events, many=True)
             return Response(serializer.data, status=status.HTTP_200_OK)
     
-    def post(self, request, event_id=None):        
+    def post(self, request):        
         data = request.data
-        start_date_str = data.get('start_date')
-        start_time_str = data.get('start_time')
-
-        if start_date_str is None or start_time_str is None:
-            return Response("Start date and start time cannot be empty", status=status.HTTP_400_BAD_REQUEST)
-        
-        start_date = datetime.strptime(start_date_str, '%Y-%m-%d').date()
-        start_time = datetime.strptime(start_time_str, '%H:%M').time()
-
-        start_datetime = timezone.make_aware(timezone.datetime.combine(start_date, start_time))
-
-        current_datetime = timezone.now()
-        if start_datetime < current_datetime:
-            return Response("Event start date and time cannot be in the past.", status=status.HTTP_400_BAD_REQUEST)
-        
+        data['college'] = Volunteer.objects.get(user_id=request.user.id).course.college.id
         serializer = EventSerializer(data=request.data)
         if serializer.is_valid():
             serializer.save()
@@ -51,7 +37,7 @@ class EventAPIView(APIView):
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
     
     def put(self, request, event_id):
-        event = Events.objects.filter(event_id=event_id).first()
+        event = Events.objects.filter(id=event_id).first()
         serializer = EventSerializer(event, data=request.data, partial=True)
         if serializer.is_valid():
             serializer.save()
@@ -59,11 +45,11 @@ class EventAPIView(APIView):
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
     
     def delete(self, request, event_id):
-        
-        event = Events.objects.filter(event_id=event_id).first()
+        event = Events.objects.filter(id=event_id).first()
         if not event:
-            return Response({'error':'event does not exist'}, status=status.HTTP_404_NOT_FOUND)
-        event.status = Events.DELETED
+            return Response('Event does not exist', status=status.HTTP_404_NOT_FOUND)
+        event.status = event.STATUS_DELETED
+        event.save()
         return Response("Event deleted", status=status.HTTP_204_NO_CONTENT)
     
 

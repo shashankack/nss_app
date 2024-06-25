@@ -13,16 +13,25 @@ class LoggedInUserAPIView(APIView):
     def get(self, request):
         self.permission_classes = [IsAuthenticated]
         self.check_permissions(request)
+        """if user.is_admin:
+            serializer = UserSerializer(user) """
+        """ non_volunteer = User.objects.filter(id=request.user.id).first() """
+        """ if non_volunteer:
+            serializer = UserSerializer(data=request.data)
+            if serializer.is_valid():
+                return Response(serializer.data, status=status.HTTP_200_OK) """
+        
         volunteer = Volunteer.objects.filter(user_id=request.user.id).first()
         print(volunteer.user.first_name)
         serializer = VolunteerSerializer(volunteer)
         values = serializer.data
         credits = Attendance.objects.filter(volunteer__user_id=request.user.id,
+                                            volunteer__role=volunteer.role,
                                             volunteer__volunteering_year=NSSYear.current_year(),
                                             ).select_related('event').values_list('event__credit_points', flat=True)
         values['credits_earned'] = sum(list(credits))
         return Response(values, status=status.HTTP_200_OK)
-    
+        
 
 class VolunteerAPIView(APIView): #College Admin, Leader
     permission_classes = [IsAuthenticated]
