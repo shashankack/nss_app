@@ -46,8 +46,8 @@ const HomePage = () => {
   const [newEvent, setNewEvent] = useState({
     name: '',
     description: '',
-    start_date: '',
-    start_time: '',
+    start_datetime: '',
+    end_datetime: '',
     location: '',
     creditPoints: '',
     instructions: '',
@@ -152,8 +152,8 @@ const HomePage = () => {
             >
               <TableCell onClick={() => handleRowClick(event.id)}>{event.name}</TableCell>
               <TableCell onClick={() => handleRowClick(event.id)}>{event.description}</TableCell>
-              <TableCell onClick={() => handleRowClick(event.id)}>{event.start_date}</TableCell>
-              <TableCell onClick={() => handleRowClick(event.id)}>{event.start_time}</TableCell>
+              <TableCell onClick={() => handleRowClick(event.id)}>{event.start_datetime}</TableCell>
+              <TableCell onClick={() => handleRowClick(event.id)}>{event.end_datetime}</TableCell>
               <TableCell onClick={() => handleRowClick(event.id)}>{event.location}</TableCell>
               <TableCell onClick={() => handleRowClick(event.id)}>{event.credit_points}</TableCell>
               {value === 0 && (
@@ -181,8 +181,8 @@ const HomePage = () => {
     const newErrors = {};
     if (!event.name) newErrors.name = 'Event name is required';
     if (!event.description) newErrors.description = 'Event description is required';
-    if (!event.start_date) newErrors.start_date = 'Start date is required';
-    if (!event.start_time) newErrors.start_time = 'Start time is required';
+    if (!event.start_datetime) newErrors.start_datetime = 'Start date is required';
+    if (!event.end_datetime) newErrors.end_datetime = 'Start time is required';
     if (!event.location) newErrors.location = 'Event location is required';
     if (!event.creditPoints) newErrors.creditPoints = 'Credit points are required';
     if (!event.instructions) newErrors.instructions = 'Instructions are required';
@@ -325,25 +325,25 @@ const HomePage = () => {
           />
           <TextField
             margin="dense"
-            name="start_date"
+            name="start_datetime"
             label="Start Date"
             type="datetime-local"
             fullWidth
-            value={newEvent.start_date}
+            value={newEvent.start_datetime}
             onChange={handleInputChange}
-            error={!!errors.start_date}
-            helperText={errors.start_date}
+            error={!!errors.start_datetime}
+            helperText={errors.start_datetime}
           />
           <TextField
             margin="dense"
-            name="start_time"
+            name="end_datetime"
             label="Start Time"
             type="datetime-local"
             fullWidth
-            value={newEvent.start_time}
+            value={newEvent.end_datetime}
             onChange={handleInputChange}
-            error={!!errors.start_time}
-            helperText={errors.start_time}
+            error={!!errors.end_datetime}
+            helperText={errors.end_datetime}
           />
           <TextField
             margin="dense"
@@ -430,14 +430,25 @@ const HomePage = () => {
           />
           <TextField
             margin="dense"
-            name="start_date_time"
+            name="start_datetime"
             label="Start Date and Time"
             type="datetime-local"
             fullWidth
-            value={selectedEvent.start_date_time}
+            value={selectedEvent.start_datetime}
             onChange={handleEditInputChange}
-            error={!!editErrors.start_date_time}
-            helperText={editErrors.start_date_time}
+            error={!!editErrors.start_datetime}
+            helperText={editErrors.start_datetime}
+          />
+          <TextField
+            margin="dense"
+            name="end_datetime"
+            label="End Date and Time"
+            type="datetime-local"
+            fullWidth
+            value={selectedEvent.end_datetime}
+            onChange={handleEditInputChange}
+            error={!!editErrors.end_datetime}
+            helperText={editErrors.end_datetime}
           />
           <TextField
             margin="dense"
