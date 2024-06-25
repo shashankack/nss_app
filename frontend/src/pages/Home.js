@@ -242,6 +242,7 @@ const HomePage = () => {
 
     try {
       const response = await api.post('/event/', newEvent);
+      fetchData();
       console.log('Event created successfully:', response.data);
       handleCloseDialog();
       // Optionally, refresh the event lists
