@@ -2,14 +2,15 @@ import React, { useState, useEffect } from 'react';
 import {
   Container, Tabs, Tab, Box, Typography, Table, TableBody, TableCell, TableContainer, TableHead,
   TableRow, Paper, CircularProgress, Button, Dialog, DialogActions, DialogContent, DialogContentText,
-  DialogTitle, TextField, IconButton, Alert
+  DialogTitle, TextField, IconButton, Grid
 } from '@mui/material';
 import EditIcon from '@mui/icons-material/Edit';
 import AddIcon from '@mui/icons-material/Add';
 import DeleteIcon from '@mui/icons-material/Delete';
-
+import { format } from 'date-fns';
 import { useNavigate } from 'react-router-dom';
 import api from '../utils/api';
+
 
 const fetchEvents = async (status) => {
   return await api.get(`/event?status=${status}`);
@@ -49,7 +50,7 @@ const HomePage = () => {
     start_datetime: '',
     end_datetime: '',
     location: '',
-    creditPoints: '',
+    credit_points: '',
     instructions: '',
     duration: '',
   });
@@ -58,6 +59,21 @@ const HomePage = () => {
   const [editErrors, setEditErrors] = useState({});
 
   const nav = useNavigate();
+
+  const fetchData = async () => {
+    try {
+      const openData = await fetchEvents('Open');
+      setOpenEvents(openData.data);
+      const attendedData = await fetchAttendedEvents();
+      setAttendedEvents(attendedData.data);
+      const completedData = await fetchCompletedEvents(attendedData.data);
+      setCompletedEvents(completedData);
+    } catch (error) {
+      console.error('Failed to fetch events:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   useEffect(() => {
     const fetchData = async () => {
@@ -101,7 +117,7 @@ const HomePage = () => {
 
   const handleDelete = async (eventId) => {
     try {
-      await api.delete(`/event/${eventId}`);
+      await api.delete(`/event/${eventId}/`);
       setOpenEvents(openEvents.filter((event) => event.id !== eventId));
       console.log('Event deleted successfully');
     } catch (error) {
@@ -143,7 +159,7 @@ const HomePage = () => {
               style={{ cursor: 'pointer' }}
               onMouseEnter={(e) => {
                 if (!e.target.closest('IconButton')) {
-                  e.target.parentNode.style.backgroundColor = '#f5f5f5';
+                  e.target.parentNode.style.backgroundColor = '#F2F3F4';
                 }
               }}
               onMouseLeave={(e) => {
@@ -152,8 +168,8 @@ const HomePage = () => {
             >
               <TableCell onClick={() => handleRowClick(event.id)}>{event.name}</TableCell>
               <TableCell onClick={() => handleRowClick(event.id)}>{event.description}</TableCell>
-              <TableCell onClick={() => handleRowClick(event.id)}>{event.start_datetime}</TableCell>
-              <TableCell onClick={() => handleRowClick(event.id)}>{event.end_datetime}</TableCell>
+              <TableCell onClick={() => handleRowClick(event.id)}>{format(new Date(event.start_datetime), 'dd/MM/yyyy')}</TableCell>
+              <TableCell onClick={() => handleRowClick(event.id)}>{format(new Date(event.start_datetime), 'hh:mm a')}</TableCell>
               <TableCell onClick={() => handleRowClick(event.id)}>{event.location}</TableCell>
               <TableCell onClick={() => handleRowClick(event.id)}>{event.credit_points}</TableCell>
               {value === 0 && (
@@ -184,7 +200,7 @@ const HomePage = () => {
     if (!event.start_datetime) newErrors.start_datetime = 'Start date is required';
     if (!event.end_datetime) newErrors.end_datetime = 'Start time is required';
     if (!event.location) newErrors.location = 'Event location is required';
-    if (!event.creditPoints) newErrors.creditPoints = 'Credit points are required';
+    if (!event.credit_points) newErrors.credit_points = 'Credit points are required';
     if (!event.instructions) newErrors.instructions = 'Instructions are required';
     if (!event.duration) newErrors.duration = 'Duration is required';
 
@@ -220,6 +236,7 @@ const HomePage = () => {
     const newErrors = validateForm(newEvent);
     if (Object.keys(newErrors).length > 0) {
       setErrors(newErrors);
+      fetchData();
       return;
     }
 
@@ -237,9 +254,10 @@ const HomePage = () => {
     event.preventDefault();
 
     try {
-      const response = await api.put(`/event/${selectedEvent.id}`, selectedEvent);
+      const response = await api.put(`/event/${selectedEvent.id}/`, selectedEvent);
       console.log('Event updated successfully:', response.data);
       handleCloseEditDialog();
+      fetchData();
       // Optionally, refresh the event lists
     } catch (error) {
       console.error('Failed to update event:', error);
@@ -300,206 +318,237 @@ const HomePage = () => {
           <DialogContentText>
             Please fill in the details of the new event.
           </DialogContentText>
-          <TextField
-            autoFocus
-            margin="dense"
-            name="name"
-            label="Event Name"
-            type="text"
-            fullWidth
-            value={newEvent.name}
-            onChange={handleInputChange}
-            error={!!errors.name}
-            helperText={errors.name}
-          />
-          <TextField
-            margin="dense"
-            name="description"
-            label="Event Description"
-            type="text"
-            fullWidth
-            value={newEvent.description}
-            onChange={handleInputChange}
-            error={!!errors.description}
-            helperText={errors.description}
-          />
-          <TextField
-            margin="dense"
-            name="start_datetime"
-            label="Start Date"
-            type="datetime-local"
-            fullWidth
-            value={newEvent.start_datetime}
-            onChange={handleInputChange}
-            error={!!errors.start_datetime}
-            helperText={errors.start_datetime}
-          />
-          <TextField
-            margin="dense"
-            name="end_datetime"
-            label="Start Time"
-            type="datetime-local"
-            fullWidth
-            value={newEvent.end_datetime}
-            onChange={handleInputChange}
-            error={!!errors.end_datetime}
-            helperText={errors.end_datetime}
-          />
-          <TextField
-            margin="dense"
-            name="location"
-            label="Event Location"
-            type="text"
-            fullWidth
-            value={newEvent.location}
-            onChange={handleInputChange}
-            error={!!errors.location}
-            helperText={errors.location}
-          />
-          <TextField
-            margin="dense"
-            name="creditPoints"
-            label="Credit Points"
-            type="number"
-            fullWidth
-            value={newEvent.creditPoints}
-            onChange={handleInputChange}
-            error={!!errors.creditPoints}
-            helperText={errors.creditPoints}
-          />
-          <TextField
-            margin="dense"
-            name="instructions"
-            label="Instructions"
-            type="text"
-            fullWidth
-            value={newEvent.instructions}
-            onChange={handleInputChange}
-            error={!!errors.instructions}
-            helperText={errors.instructions}
-          />
-          <TextField
-            margin="dense"
-            name="duration"
-            label="Duration"
-            type="text"
-            fullWidth
-            value={newEvent.duration}
-            onChange={handleInputChange}
-            error={!!errors.duration}
-            helperText={errors.duration}
-          />
-        </DialogContent>
+          <Grid container spacing={2}>
+            <Grid item xs={12}>
+              <TextField
+                autoFocus
+                margin="dense"
+                name="name"
+                label="Event Name"
+                type="text"
+                fullWidth
+                value={newEvent.name}
+                onChange={handleInputChange}
+                error={!!errors.name}
+                helperText={errors.name}
+              />
+            </Grid>
+            <Grid item xs={12}>
+              <TextField
+                margin="dense"
+                name="description"
+                label="Event Description"
+                type="text"
+                fullWidth
+                value={newEvent.description}
+                onChange={handleInputChange}
+                error={!!errors.description}
+                helperText={errors.description}
+              />
+            </Grid>
+            <Grid item xs={6}>
+              <Grid item>Start Date and Time</Grid>
+              <TextField
+                margin="dense"
+                name="start_datetime"
+                type="datetime-local"
+                fullWidth
+                value={newEvent.start_datetime}
+                onChange={handleInputChange}
+                error={!!errors.start_datetime}
+                helperText={errors.start_datetime}
+              />
+            </Grid>
+            <Grid item xs={6}>
+            <Grid item>End Date and Time</Grid>
+              <TextField
+                margin="dense"
+                name="end_datetime"
+                type="datetime-local"
+                fullWidth
+                value={newEvent.end_datetime}
+                onChange={handleInputChange}
+                error={!!errors.end_datetime}
+                helperText={errors.end_datetime}
+              />
+            </Grid>
+            <Grid item xs={12}>
+              <TextField
+                margin="dense"
+                name="location"
+                label="Event Location"
+                type="text"
+                fullWidth
+                value={newEvent.location}
+                onChange={handleInputChange}
+                error={!!errors.location}
+                helperText={errors.location}
+              />
+            </Grid>
+            <Grid item xs={6}>
+              <TextField
+                margin="dense"
+                name="credit_points"
+                label="Credit Points"
+                type="number"
+                fullWidth
+                value={newEvent.credit_points}
+                onChange={handleInputChange}
+                error={!!errors.credit_points}
+                helperText={errors.credit_points}
+              />
+            </Grid>
+            <Grid item xs={6}>
+              <TextField
+                margin="dense"
+                name="duration"
+                label="Duration"
+                type="text"
+                fullWidth
+                value={newEvent.duration}
+                onChange={handleInputChange}
+                error={!!errors.duration}
+                helperText={errors.duration}
+              />
+            </Grid>
+            <Grid item xs={12}>
+              <TextField
+                margin="dense"
+                name="instructions"
+                label="Instructions"
+                type="text"
+                multiline={true}
+                fullWidth
+                value={newEvent.instructions}
+                onChange={handleInputChange}
+                error={!!errors.instructions}
+                helperText={errors.instructions}
+              />
+            </Grid>
+          </Grid>
+          </DialogContent>
         <DialogActions>
-          <Button onClick={handleCloseDialog} color="primary">
+          <Button onClick={handleCloseDialog} color="error" variant="contained">
             Cancel
           </Button>
-          <Button onClick={handleSubmit} color="primary">
+          <Button onClick={handleSubmit} color="primary" variant="contained">
             Create
           </Button>
         </DialogActions>
       </Dialog>
+
       <Dialog open={editDialog} onClose={handleCloseEditDialog}>
         <DialogTitle>Edit Event</DialogTitle>
         <DialogContent>
-          <DialogContentText>
+          <DialogContentText sx={{mb:2}}>
             Please edit the details of the event.
           </DialogContentText>
-          <TextField
-            autoFocus
-            margin="dense"
-            name="name"
-            label="Event Name"
-            type="text"
-            fullWidth
-            value={selectedEvent.name}
-            onChange={handleEditInputChange}
-            error={!!editErrors.name}
-            helperText={editErrors.name}
-          />
-          <TextField
-            margin="dense"
-            name="description"
-            label="Event Description"
-            type="text"
-            fullWidth
-            value={selectedEvent.description}
-            onChange={handleEditInputChange}
-            error={!!editErrors.description}
-            helperText={editErrors.description}
-          />
-          <TextField
-            margin="dense"
-            name="start_datetime"
-            label="Start Date and Time"
-            type="datetime-local"
-            fullWidth
-            value={selectedEvent.start_datetime}
-            onChange={handleEditInputChange}
-            error={!!editErrors.start_datetime}
-            helperText={editErrors.start_datetime}
-          />
-          <TextField
-            margin="dense"
-            name="end_datetime"
-            label="End Date and Time"
-            type="datetime-local"
-            fullWidth
-            value={selectedEvent.end_datetime}
-            onChange={handleEditInputChange}
-            error={!!editErrors.end_datetime}
-            helperText={editErrors.end_datetime}
-          />
-          <TextField
-            margin="dense"
-            name="location"
-            label="Event Location"
-            type="text"
-            fullWidth
-            value={selectedEvent.location}
-            onChange={handleEditInputChange}
-            error={!!editErrors.location}
-            helperText={editErrors.location}
-          />
-          <TextField
-            margin="dense"
-            name="creditPoints"
-            label="Credit Points"
-            type="number"
-            fullWidth
-            value={selectedEvent.credit_points}
-            onChange={handleEditInputChange}
-            error={!!editErrors.creditPoints}
-            helperText={editErrors.creditPoints}
-          />
-          <TextField
-            margin="dense"
-            name="instructions"
-            label="Instructions"
-            type="text"
-            fullWidth
-            value={selectedEvent.instructions}
-            onChange={handleEditInputChange}
-            error={!!editErrors.instructions}
-            helperText={editErrors.instructions}
-          />
-          <TextField
-            margin="dense"
-            name="duration"
-            label="Duration"
-            type="text"
-            fullWidth
-            value={selectedEvent.duration}
-            onChange={handleEditInputChange}
-            error={!!editErrors.duration}
-            helperText={editErrors.duration}
-          />
+          <Grid container spacing={2}>
+            <Grid item xs={12}>
+              <TextField
+                autoFocus
+                margin="dense"
+                name="name"
+                label="Event Name"
+                type="text"
+                fullWidth
+                value={selectedEvent.name}
+                onChange={handleEditInputChange}
+                error={!!editErrors.name}
+                helperText={editErrors.name}/>
+            </Grid>
+            <Grid item xs={12}>
+              <TextField
+                margin="dense"
+                name="description"
+                label="Event Description"
+                type="text"
+                fullWidth
+                value={selectedEvent.description}
+                onChange={handleEditInputChange}
+                error={!!editErrors.description}
+                helperText={editErrors.description}/>
+            </Grid>
+            <Grid item xs={6}>
+              <TextField
+                margin="dense"
+                name="start_datetime"
+                label="Start Date and Time"
+                type="datetime-local"
+                fullWidth
+                value={selectedEvent.start_datetime}
+                onChange={handleEditInputChange}
+                error={!!editErrors.start_datetime}
+                helperText={editErrors.start_datetime}/>
+            </Grid>
+            <Grid item xs={6}>
+              <TextField
+                margin="dense"
+                name="end_datetime"
+                label="End Date and Time"
+                type="datetime-local"
+                fullWidth
+                value={selectedEvent.end_datetime}
+                onChange={handleEditInputChange}
+                error={!!editErrors.end_datetime}
+                helperText={editErrors.end_datetime}/>
+            </Grid>
+            <Grid item xs={12}>
+              <TextField
+                margin="dense"
+                name="location"
+                label="Event Location"
+                type="text"
+                fullWidth
+                value={selectedEvent.location}
+                onChange={handleEditInputChange}
+                error={!!editErrors.location}
+                helperText={editErrors.location}/>
+            </Grid>
+            <Grid item xs={6}>
+              <TextField
+                margin="dense"
+                name="credit_points"
+                label="Credit Points"
+                type="number"
+                fullWidth
+                value={selectedEvent.credit_points}
+                onChange={handleEditInputChange}
+                error={!!editErrors.credit_points}
+                helperText={editErrors.credit_points}/>
+            </Grid>
+            <Grid item xs={6}>
+              <TextField
+                margin="dense"
+                name="duration"
+                label="Duration"
+                type="text"
+                fullWidth
+                value={selectedEvent.duration}
+                onChange={handleEditInputChange}
+                error={!!editErrors.duration}
+                helperText={editErrors.duration}/>
+            </Grid>
+            <Grid item xs={12}>
+              <TextField
+                margin="dense"
+                name="instructions"
+                label="Instructions"
+                type="text"
+                multiline={true}
+                fullWidth
+                value={selectedEvent.instructions}
+                onChange={handleEditInputChange}
+                error={!!editErrors.instructions}
+                helperText={editErrors.instructions}/>
+            </Grid>
+          </Grid>
         </DialogContent>
         <DialogActions>
-          <Button onClick={handleCloseEditDialog} color="primary">
+          <Button onClick={handleCloseEditDialog} color="error" variant="contained">
             Cancel
           </Button>
-          <Button onClick={handleEditSubmit} color="primary">
+          <Button onClick={handleEditSubmit} color="primary" variant="contained">
             Update
           </Button>
         </DialogActions>

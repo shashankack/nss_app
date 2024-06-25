@@ -27,7 +27,7 @@ class Events(models.Model):
     end_datetime = models.DateTimeField()
     duration = models.TextField()
     location = models.CharField(max_length=250)
-    status = models.CharField(choices=STATUS_CHOICES)
+    status = models.CharField(choices=STATUS_CHOICES, default=STATUS_OPEN)
     credit_points = models.IntegerField(null=True)
 
 
