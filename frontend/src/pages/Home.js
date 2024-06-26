@@ -147,70 +147,71 @@ const HomePage = () => {
 
   const renderTable = (events) => (
     <TableContainer
-      component={Paper}
-      elevation={24}
+  component={Paper}
+  elevation={24}
+  sx={{
+    maxHeight: 350,
+    overflowY: 'auto',
+    '&::-webkit-scrollbar': { display: 'none'},
+  }}
+>
+  <Table stickyHeader>
+    <TableHead
       sx={{
-        maxHeight: 400,
-        overflowY: 'auto',
-        '&::-webkit-scrollbar': { display: 'none' },
+        '& th': { backgroundColor: 'primary.main', color: 'white' },
       }}
     >
-      <Table stickyHeader>
-        <TableHead
-          sx={{
-            '& th': { backgroundColor: 'primary.main', color: 'white' },
+      <TableRow>
+        <TableCell>Name</TableCell>
+        <TableCell>Description</TableCell>
+        <TableCell>Start Date</TableCell>
+        <TableCell>Start Time</TableCell>
+        <TableCell>Location</TableCell>
+        <TableCell>Credit Points</TableCell>
+        {value === 0 && userRole === "Leader" && <TableCell>Actions</TableCell>}
+        {value === 1 && <TableCell>Earned Points</TableCell>}
+      </TableRow>
+    </TableHead>
+    <TableBody>
+      {events.slice().map((event) => (
+        <TableRow
+          key={event.id}
+          style={{ cursor: 'pointer' }}
+          onMouseEnter={(e) => {
+            if (!e.target.closest('IconButton')) {
+              e.target.parentNode.style.backgroundColor = '#F2F3F4';
+            }
+          }}
+          onMouseLeave={(e) => {
+            e.target.parentNode.style.backgroundColor = 'inherit';
           }}
         >
-          <TableRow>
-            <TableCell>Name</TableCell>
-            <TableCell>Description</TableCell>
-            <TableCell>Start Date</TableCell>
-            <TableCell>Start Time</TableCell>
-            <TableCell>Location</TableCell>
-            <TableCell>Credit Points</TableCell>
-            {value === 0 && userRole === "Leader" && <TableCell>Actions</TableCell>}
-            {value === 1 && <TableCell>Earned Points</TableCell>}
-          </TableRow>
-        </TableHead>
-        <TableBody >
-          {events.slice(0, 5).map((event) => (
-            <TableRow
-              key={event.id}
-              style={{ cursor: 'pointer' }}
-              onMouseEnter={(e) => {
-                if (!e.target.closest('IconButton')) {
-                  e.target.parentNode.style.backgroundColor = '#F2F3F4';
-                }
-              }}
-              onMouseLeave={(e) => {
-                e.target.parentNode.style.backgroundColor = 'inherit';
-              }}
-            >
-              <TableCell onClick={() => handleRowClick(event.id)}>{event.name}</TableCell>
-              <TableCell onClick={() => handleRowClick(event.id)}>{event.description}</TableCell>
-              <TableCell onClick={() => handleRowClick(event.id)}>{format(new Date(event.start_datetime), 'dd/MM/yyyy')}</TableCell>
-              <TableCell onClick={() => handleRowClick(event.id)}>{format(new Date(event.start_datetime), 'hh:mm a')}</TableCell>
-              <TableCell onClick={() => handleRowClick(event.id)}>{event.location}</TableCell>
-              <TableCell onClick={() => handleRowClick(event.id)}>{event.credit_points}</TableCell>
-              {value === 0 && userRole === "Leader" && (
-                <TableCell>
-                  <IconButton color="primary" onClick={() => handleEdit(event)}>
-                    <EditIcon sx={{mt:-2, mb:-2}}/>
-                  </IconButton>
-                  <IconButton
-                    sx={{ color: 'rgb(198, 40, 50)' }}
-                    onClick={() => handleDelete(event.id)}
-                  >
-                    <DeleteIcon sx={{mt:-2, mb:-2}}/>
-                  </IconButton>
-                </TableCell>
-              )}
-              {value === 1 && <TableCell>{event.earned_points}</TableCell>}
-            </TableRow>
-          ))}
-        </TableBody>
-      </Table>
-    </TableContainer>
+          <TableCell onClick={() => handleRowClick(event.id)}>{event.name}</TableCell>
+          <TableCell onClick={() => handleRowClick(event.id)}>{event.description}</TableCell>
+          <TableCell onClick={() => handleRowClick(event.id)}>{format(new Date(event.start_datetime), 'dd/MM/yyyy')}</TableCell>
+          <TableCell onClick={() => handleRowClick(event.id)}>{format(new Date(event.start_datetime), 'hh:mm a')}</TableCell>
+          <TableCell onClick={() => handleRowClick(event.id)}>{event.location}</TableCell>
+          <TableCell onClick={() => handleRowClick(event.id)}>{event.credit_points}</TableCell>
+          {value === 0 && userRole === "Leader" && (
+            <TableCell>
+              <IconButton color="primary" onClick={() => handleEdit(event)}>
+                <EditIcon sx={{ mt: -2, mb: -2 }} />
+              </IconButton>
+              <IconButton
+                sx={{ color: 'rgb(198, 40, 50)' }}
+                onClick={() => handleDelete(event.id)}
+              >
+                <DeleteIcon sx={{ mt: -2, mb: -2 }} />
+              </IconButton>
+            </TableCell>
+          )}
+          {value === 1 && <TableCell>{event.earned_points}</TableCell>}
+        </TableRow>
+      ))}
+    </TableBody>
+  </Table>
+</TableContainer>
+
   );
 
   const validateForm = (event) => {
@@ -546,6 +547,18 @@ const HomePage = () => {
                 onChange={handleEditInputChange}
                 error={!!editErrors.location}
                 helperText={editErrors.location}/>
+            </Grid>
+            <Grid item xs={12}>
+              <TextField
+                margin="dense"
+                name="Status"
+                label="Event Status"
+                type="text"
+                fullWidth
+                value={selectedEvent.status}
+                onChange={handleEditInputChange}
+                error={!!editErrors.status}
+                helperText={editErrors.status}/>
             </Grid>
             <Grid item xs={6}>
               <TextField
