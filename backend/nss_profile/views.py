@@ -97,7 +97,6 @@ class VolunteerAPIView(APIView): #College Admin, Leader
         else:
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-
     def delete(self, request, pk):
         volunteer = Volunteer.objects.filter(pk=pk).first()
         if not volunteer:
@@ -105,7 +104,6 @@ class VolunteerAPIView(APIView): #College Admin, Leader
         
         volunteer.delete()
         return Response("Volunteer deleted successfully", status=status.HTTP_204_NO_CONTENT)
-    
 
     def put(self, request, pk):
         volunteer = Volunteer.objects.filter(pk=pk).first()

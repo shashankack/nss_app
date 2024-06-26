@@ -20,6 +20,11 @@ const fetchAttendedEvents = async () => {
   return await api.get('/volunteer/eventsAttended');
 };
 
+const fetchUserRole = async () => {
+  const response = await api.get('/loggedinuser/');
+  return response.data.role
+};
+
 const TabPanel = (props) => {
   const { children, value, index, ...other } = props;
 
@@ -44,6 +49,7 @@ const HomePage = () => {
   const [value, setValue] = useState(0);
   const [openDialog, setOpenDialog] = useState(false);
   const [editDialog, setEditDialog] = useState(false);
+  const [userRole, setUserRole] = useState('');
   const [newEvent, setNewEvent] = useState({
     name: '',
     description: '',
@@ -74,6 +80,20 @@ const HomePage = () => {
       setLoading(false);
     }
   };
+
+  useEffect(() => {
+    const initializeData = async () => {
+      try {
+        const role = await fetchUserRole();
+        setUserRole(role);
+        fetchData();
+      } catch (error) {
+        console.error('Failed to fetch user role:', error);
+      }
+    };
+
+    initializeData();
+  }, []);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -148,7 +168,7 @@ const HomePage = () => {
             <TableCell>Start Time</TableCell>
             <TableCell>Location</TableCell>
             <TableCell>Credit Points</TableCell>
-            {value === 0 && <TableCell>Actions</TableCell>}
+            {value === 0 && userRole === "Leader" && <TableCell>Actions</TableCell>}
             {value === 1 && <TableCell>Earned Points</TableCell>}
           </TableRow>
         </TableHead>
@@ -172,7 +192,7 @@ const HomePage = () => {
               <TableCell onClick={() => handleRowClick(event.id)}>{format(new Date(event.start_datetime), 'hh:mm a')}</TableCell>
               <TableCell onClick={() => handleRowClick(event.id)}>{event.location}</TableCell>
               <TableCell onClick={() => handleRowClick(event.id)}>{event.credit_points}</TableCell>
-              {value === 0 && (
+              {value === 0 && userRole === "Leader" && (
                 <TableCell>
                   <IconButton color="primary" onClick={() => handleEdit(event)}>
                     <EditIcon sx={{mt:-2, mb:-2}}/>
@@ -280,7 +300,7 @@ const HomePage = () => {
     );
   }
 
-  return (
+  return(
     <Container>
       <Box
         sx={{
@@ -291,21 +311,27 @@ const HomePage = () => {
           alignItems: 'center',
           mt: 20,
           borderRadius:2
-        }}
-      >
+        }}>
         <Tabs value={value} onChange={handleChange} aria-label="event tabs">
           <Tab label="Open Events" />
           <Tab label="Completed Events" />
         </Tabs>
-        <Button
-          variant="contained"
+        {userRole === "Leader" && (
+        <Button 
+          variant="outlined"
           color="primary"
           onClick={handleOpenDialog}
-          sx={{ mr: 10 }}
+          sx={{ mr: 10, transition: 'all 0.3s ease',
+            '&:hover': {
+              backgroundColor: 'primary.main',
+              color: "#ffffff",
+              transform: 'scale(1)',
+            }, }}
           startIcon={<AddIcon/>}
         >
           New Event
         </Button>
+        )}
       </Box>
       <TabPanel value={value} index={0}>
         {renderTable(openEvents)}
@@ -429,10 +455,25 @@ const HomePage = () => {
           </Grid>
           </DialogContent>
         <DialogActions>
-          <Button onClick={handleCloseDialog} color="error" variant="contained">
+          <Button onClick={handleCloseDialog} color="error" variant="outlined" sx={{transition: 'all 0.3s ease',
+                  '&:hover': {
+                    backgroundColor: 'error.main',
+                    color: "#ffffff",
+                    transform: 'scale(1)',
+              },}}>
             Cancel
           </Button>
-          <Button onClick={handleSubmit} color="primary" variant="contained">
+          <Button onClick={handleSubmit} 
+          color="primary"
+          variant="outlined"
+          sx={{
+            transition: 'all 0.3s ease',
+                  '&:hover': {
+                    backgroundColor: 'primary.main',
+                    color: "#ffffff",
+                    transform: 'scale(1)',
+              },
+          }}>
             Create
           </Button>
         </DialogActions>
@@ -546,10 +587,24 @@ const HomePage = () => {
           </Grid>
         </DialogContent>
         <DialogActions>
-          <Button onClick={handleCloseEditDialog} color="error" variant="contained">
+          <Button onClick={handleCloseEditDialog} color="error" variant="outlined" sx={{transition: 'all 0.3s ease',
+                  '&:hover': {
+                    backgroundColor: 'error.main',
+                    color: "#ffffff",
+                    transform: 'scale(1)',
+                  },}}>
             Cancel
           </Button>
-          <Button onClick={handleEditSubmit} color="primary" variant="contained">
+          <Button
+           onClick={handleEditSubmit}
+           color="primary" variant="outlined"
+           sx={{
+                transition: 'all 0.3s ease',
+                  '&:hover': {
+                    backgroundColor: 'primary.main',
+                    color: "#ffffff",
+                    transform: 'scale(1)',
+              },}}>
             Update
           </Button>
         </DialogActions>

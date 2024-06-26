@@ -6,14 +6,12 @@ import IconButton from '@mui/material/IconButton';
 import Typography from '@mui/material/Typography';
 import Menu from '@mui/material/Menu';
 import Avatar from '@mui/material/Avatar';
-import SvgIcon from '@mui/material/SvgIcon';
 import Tooltip from '@mui/material/Tooltip';
 import MenuItem from '@mui/material/MenuItem';
 import { useLocation, useNavigate } from 'react-router-dom';
 import api from '../utils/api';
 import { clearTokens } from '../utils/auth';
 import Badge from '@mui/material/Badge';
-import GradeIcon from '@mui/icons-material/Grade';
 import logo from '../assets/nss_logo.png'; // Ensure this is a high-resolution image
 import CreditIcon from '../assets/credits_earned_dark.png'
 function ResponsiveAppBar() {
@@ -112,12 +110,23 @@ function ResponsiveAppBar() {
             variant="h6"
             noWrap
             component="div"
-            sx={{ display: { xs: 'none', sm: 'block' }, ml: 20, mt:.5 }}
+            sx={{ display: { xs: 'none', sm: 'block' }, ml: 25, mt:.5 }}
           >
             Volunteering Year: {userProfile.volunteering_year ? userProfile.volunteering_year.label : ''}
           </Typography>
         </Box>
-        <Box sx={{ flexGrow: 1 }} />
+        <Box sx={{ flexGrow: 1 }} >
+        <Typography
+        fontFamily='custom-font'
+        fontSize='1.5rem'
+        variant="h6"
+        noWrap
+        component="div"
+        sx={{ display: { xs: 'none', sm: 'block' }, ml: 30, mt:.5 }}
+      >
+        Role: {userProfile.role}
+      </Typography>
+        </Box>
         <Box sx={{ display: { xs: 'none', md: 'flex' }, mr:2, mt:.5 }}>
           <Tooltip title="Credit Points">
             <IconButton

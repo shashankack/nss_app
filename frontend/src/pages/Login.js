@@ -11,11 +11,11 @@ const useStyles = makeStyles(() => ({
     display: 'flex',
     margin: 'auto',
     marginTop: '64px',
-    borderRadius: '4px',
+    borderRadius: '20px',
     width: '900px',
     height: '600px',
     padding: '5px',
-    boxShadow: '4px 15px 150px rgba(0, 0, 0, 0.2)',
+    boxShadow: '4px 15px 150px rgba(0, 0, 0, 0.5)',
   },
   formContainer: {
     marginTop: '60px',
@@ -100,10 +100,18 @@ const Login = () => {
               onChange={handlePasswordChange}
             />
             {error && <Typography color="error">{error}</Typography>}
-            <Box display="flex" justifyContent="center">
-              <Button
+            <Box display="flex" justifyContent="center" sx={{mt:-1}}>
+              <Button 
+                sx={{
+                  transition: 'all 0.3s ease',
+                  '&:hover': {
+                    backgroundColor: 'primary.main',
+                    color: "#ffffff",
+                    transform: 'scale(1.1)',
+                  },
+                }}
                 type="submit"
-                variant="contained"
+                variant="outlined"
                 color="primary"
                 className={classes.submit}
               >
