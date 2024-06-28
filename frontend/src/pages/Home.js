@@ -150,7 +150,7 @@ const HomePage = () => {
   component={Paper}
   elevation={24}
   sx={{
-    maxHeight: 350,
+    maxHeight: 300,
     overflowY: 'auto',
     '&::-webkit-scrollbar': { display: 'none'},
   }}

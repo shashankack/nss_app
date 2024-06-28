@@ -100,7 +100,7 @@ const Login = () => {
               onChange={handlePasswordChange}
             />
             {error && <Typography color="error">{error}</Typography>}
-            <Box display="flex" justifyContent="center" sx={{mt:-1}}>
+            <Box display="flex" justifyContent="center" sx={{mt:1}}>
               <Button 
                 sx={{
                   transition: 'all 0.3s ease',

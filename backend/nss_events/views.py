@@ -2,13 +2,9 @@ from rest_framework.response import Response
 from rest_framework import status
 from rest_framework.views import APIView
 from rest_framework.permissions import IsAuthenticated
-from nss_profile.permissions import IsCollegeAdmin
 from .serializers import EventSerializer, AttendanceSerializer
 from .models import Events, Attendance
-from nss_profile.models import Volunteer
-from django.utils import timezone
-from datetime import datetime
-from django.db import IntegrityError
+from nss_profile.models import Volunteer    
 from nss_profile.models import NSSYear
 
 class EventAPIView(APIView):
@@ -54,7 +50,7 @@ class EventAPIView(APIView):
     
 
 class AttendanceAPIView(APIView):
-    permission_classes = [IsCollegeAdmin]
+    permission_classes = [IsAuthenticated]
     def get(self, request, event_id):
         if event_id is not None:
             event = Events.objects.filter(id=event_id).first()
