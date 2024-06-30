@@ -73,7 +73,7 @@ function ResponsiveAppBar() {
 
   return (
     isNotLoginPage && 
-    <AppBar position="static" sx={{ height: 70 }}>
+    <AppBar position="sticky" sx={{ height: 70 }}>
       <Toolbar>
         <Box display="flex" alignItems="center">
           <IconButton

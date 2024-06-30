@@ -1,22 +1,12 @@
 import React, { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
-import {
-  Container,
-  Typography,
-  CircularProgress,
-  Paper,
-  Grid,
-  TextField,
-  Button, 
-  Accordion,
-  AccordionSummary,
-  AccordionDetails,
-} from '@mui/material';
+import {Container, Typography, CircularProgress, Paper, Grid, TextField, Button, Accordion, AccordionSummary, AccordionDetails} from '@mui/material';
 import PlaceIcon from '@mui/icons-material/Place';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import DescriptionIcon from '@mui/icons-material/Description';
 import AccessTimeIcon from '@mui/icons-material/AccessTime';
 import EditNoteIcon from '@mui/icons-material/EditNote';
+import Gallery from '../components/Gallery';
 import api from '../utils/api';
 
 const EventDetailPage = () => {
@@ -167,6 +157,17 @@ const EventDetailPage = () => {
             />
           </Grid>
         </Grid>
+        <Accordion>
+          <AccordionSummary expandIcon={<ExpandMoreIcon />}>
+            <Typography variant="h6" color="textPrimary">
+              <DescriptionIcon sx={{ mr: 1, verticalAlign: 'middle' }} />
+              Event Gallery
+            </Typography>
+          </AccordionSummary>
+          <AccordionDetails>
+            <Gallery />
+          </AccordionDetails>
+        </Accordion>
       </Paper>
     </Container>
   );
