@@ -40,6 +40,9 @@ class Attendance(models.Model):
     event = models.ForeignKey(Events, on_delete=models.CASCADE)
 
 class EventComments(models.Model):
+    class Meta:
+        db_table = 'EventComments'
+
     user = models.ForeignKey(User, on_delete=models.CASCADE)
     event = models.ForeignKey(Events, on_delete=models.CASCADE)
     comment = models.TextField()

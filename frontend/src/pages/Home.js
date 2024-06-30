@@ -186,7 +186,7 @@ const HomePage = () => {
             e.target.parentNode.style.backgroundColor = 'inherit';
           }}
         >
-          <TableCell onClick={() => handleRowClick(event.id)}>{event.name}</TableCell>
+          <TableCell onClick={() => handleRowClick(event.id)}><Typography>{event.name}</Typography></TableCell>
           <TableCell onClick={() => handleRowClick(event.id)}>{event.description}</TableCell>
           <TableCell onClick={() => handleRowClick(event.id)}>{format(new Date(event.start_datetime), 'dd/MM/yyyy')}</TableCell>
           <TableCell onClick={() => handleRowClick(event.id)}>{format(new Date(event.start_datetime), 'hh:mm a')}</TableCell>
