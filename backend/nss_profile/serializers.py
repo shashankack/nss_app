@@ -69,3 +69,4 @@ class CollegeCoursesSerializer(serializers.ModelSerializer):
     def create(self, validated_data):
         course = CollegeCourses.objects.create(**validated_data)
         return course
+    

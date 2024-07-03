@@ -1,18 +1,31 @@
+// EventDetailPage.js
 import React, { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
-import {Container, Typography, CircularProgress, Paper, Grid, TextField, Button, Accordion, AccordionSummary, AccordionDetails} from '@mui/material';
+import {
+  Container,
+  Typography,
+  CircularProgress,
+  Paper,
+  Grid,
+  TextField,
+  Button,
+  Accordion,
+  AccordionSummary,
+  AccordionDetails,
+} from '@mui/material';
 import PlaceIcon from '@mui/icons-material/Place';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import DescriptionIcon from '@mui/icons-material/Description';
 import AccessTimeIcon from '@mui/icons-material/AccessTime';
-import EditNoteIcon from '@mui/icons-material/EditNote';
 import Gallery from '../components/Gallery';
 import api from '../utils/api';
+import TransferListPopup from '../components/TransferListPopup';
 
 const EventDetailPage = () => {
   const { id } = useParams();
   const [event, setEvent] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [isPopupOpen, setIsPopupOpen] = useState(false);
 
   useEffect(() => {
     const fetchEventDetails = async () => {
@@ -47,7 +60,7 @@ const EventDetailPage = () => {
 
   return (
     <Container maxWidth="lg" sx={{ mt: 4 }}>
-      <Paper elevation={24} sx={{ p: 5,  borderRadius: 5 }}>
+      <Paper elevation={24} sx={{ p: 5, borderRadius: 5 }}>
         <Grid container spacing={3}>
           <Grid item xs={6}>
             <Typography variant="h4" gutterBottom sx={{ fontWeight: 'bold' }}>
@@ -55,7 +68,7 @@ const EventDetailPage = () => {
             </Typography>
           </Grid>
           <Grid item xs={6} sx={{ textAlign: 'right' }}>
-            <Button variant="outlined">Mark Attendance</Button>
+            <Button variant="outlined" onClick={() => setIsPopupOpen(true)}>Mark Attendance</Button>
           </Grid>
           <Grid item md={6} sm={12}>
             <Accordion>
@@ -81,8 +94,8 @@ const EventDetailPage = () => {
                 </Typography>
               </AccordionSummary>
               <AccordionDetails>
-                <Typography variant="body1" color="textSecondary" >
-                {event.instructions}
+                <Typography variant="body1" color="textSecondary">
+                  {event.instructions}
                 </Typography>
               </AccordionDetails>
             </Accordion>
@@ -169,6 +182,7 @@ const EventDetailPage = () => {
           </AccordionDetails>
         </Accordion>
       </Paper>
+      <TransferListPopup open={isPopupOpen} onClose={() => setIsPopupOpen(false)} eventId={id} />
     </Container>
   );
 };

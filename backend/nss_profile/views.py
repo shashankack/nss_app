@@ -227,4 +227,3 @@ class CollegeAdminAPIView(APIView):
             return Response("College admin has been updated", status=status.HTTP_200_OK)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
     
-    

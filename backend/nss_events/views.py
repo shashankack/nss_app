@@ -2,7 +2,7 @@ from rest_framework.response import Response
 from rest_framework import status
 from rest_framework.views import APIView
 from rest_framework.permissions import IsAuthenticated
-from .serializers import EventSerializer, AttendanceSerializer
+from .serializers import EventSerializer, AttendanceSerializer, CollegeVolunteersSerializer
 from .models import Events, Attendance
 from nss_profile.models import Volunteer    
 from nss_profile.models import NSSYear
@@ -55,11 +55,11 @@ class AttendanceAPIView(APIView):
         if event_id is not None:
             event = Events.objects.filter(id=event_id).first()
             if not event:
-                return Response("Event does not exist", status=status.HTTP_404_NOT_FOUND)
+                return Response({'error': 'Event does not exist'}, status=status.HTTP_404_NOT_FOUND)
             
             attendance = Attendance.objects.filter(event=event)
             if not attendance.exists():
-                return Response('No attendance marked', status=status.HTTP_404_NOT_FOUND)
+                return Response({'error': 'No attendance marked'}, status=status.HTTP_404_NOT_FOUND)
         else:
             attendance = Attendance.objects.all()
         serializer = AttendanceSerializer(attendance, many=True)
@@ -70,7 +70,7 @@ class AttendanceAPIView(APIView):
         if not event:
             return Response({'error':'Event does not exist'}, status=status.HTTP_404_NOT_FOUND)
         
-        volunteer_ids = request.data.get('volunteers')
+        volunteer_ids = request.data.get('volunteer_ids')
         if not volunteer_ids:
             return Response({'error':'Volunteer ID\'s are required'}, status=status.HTTP_400_BAD_REQUEST)
         
@@ -101,3 +101,28 @@ class EventsAttendedAPIView(APIView):
                                             ).select_related('event').values_list('event__id', flat=True))
         return Response(events, status=status.HTTP_200_OK)
         
+
+class CollegeVolunteersAPIView(APIView):
+    permission_classes = [IsAuthenticated]
+    
+    def get(self, request):
+        college_id = Volunteer.objects.get(user_id=request.user.id).course.college.id
+        volunteers = Volunteer.objects.filter(course__college_id=college_id)
+        serializer = CollegeVolunteersSerializer(volunteers, many=True)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+    
+class EventAttendedVolunteersAPIView(APIView):
+    permission_classes = [IsAuthenticated]
+    
+    def get(self, request, event_id):
+        event = Events.objects.filter(id=event_id).first()
+        if not event:
+            return Response("Event does not exist", status=status.HTTP_404_NOT_FOUND)
+        
+        volunteers = list(Attendance.objects.filter(event=event).select_related('volunteer').values_list('volunteer__id', flat=True))
+
+        if len(volunteers) == 0:
+            return Response("Attendance does not exist for this event", status=status.HTTP_404_NOT_FOUND)
+        
+        serializer = CollegeVolunteersSerializer(Volunteer.objects.filter(id__in=volunteers), many=True)
+        return Response(serializer.data, status=status.HTTP_200_OK)

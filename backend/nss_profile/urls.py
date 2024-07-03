@@ -10,7 +10,7 @@ urlpatterns = [
     path('token/refresh/', TokenRefreshView.as_view()),
     path('loggedinuser/', LoggedInUserAPIView.as_view()),
 
-    path('volunteer/', VolunteerAPIView.as_view()),
+    path('volunteers/', VolunteerAPIView.as_view()),
     path('volunteer/<int:volunteer_id>/', VolunteerAPIView.as_view()),
 
     path('admin/volunteer/', VolunteerAPIView.as_view()),
