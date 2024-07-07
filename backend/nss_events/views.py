@@ -101,15 +101,6 @@ class EventsAttendedAPIView(APIView):
                                             ).select_related('event').values_list('event__id', flat=True))
         return Response(events, status=status.HTTP_200_OK)
         
-
-class CollegeVolunteersAPIView(APIView):
-    permission_classes = [IsAuthenticated]
-    
-    def get(self, request):
-        college_id = Volunteer.objects.get(user_id=request.user.id).course.college.id
-        volunteers = Volunteer.objects.filter(course__college_id=college_id)
-        serializer = CollegeVolunteersSerializer(volunteers, many=True)
-        return Response(serializer.data, status=status.HTTP_200_OK)
     
 class EventAttendedVolunteersAPIView(APIView):
     permission_classes = [IsAuthenticated]

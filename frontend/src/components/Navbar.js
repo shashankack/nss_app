@@ -14,6 +14,7 @@ import { clearTokens } from '../utils/auth';
 import Badge from '@mui/material/Badge';
 import logo from '../assets/nss_logo.png'; // Ensure this is a high-resolution image
 import CreditIcon from '../assets/credits_earned_dark.png'
+import AutoAwesomeIcon from '@mui/icons-material/AutoAwesome';
 function ResponsiveAppBar() {
   const location = useLocation();
   const isNotLoginPage = location.pathname !== '/login';
@@ -112,7 +113,7 @@ function ResponsiveAppBar() {
             component="div"
             sx={{ display: { xs: 'none', sm: 'block' }, ml: 25, mt:.5 }}
           >
-            Volunteering Year: {userProfile.volunteering_year ? userProfile.volunteering_year.label : ''}
+            Volunteering Year: {userProfile.volunteering_year}
           </Typography>
         </Box>
         <Box sx={{ flexGrow: 1 }} >
@@ -127,17 +128,17 @@ function ResponsiveAppBar() {
         Role: {userProfile.role}
       </Typography>
         </Box>
-        <Box sx={{ display: { xs: 'none', md: 'flex' }, mr:2, mt:.5 }}>
+        {userProfile.credits_earned && <Box sx={{ display: { xs: 'none', md: 'flex' }, mr:2, mt:.5 }}>
           <Tooltip title="Credit Points">
             <IconButton
               size="large"
               color="inherit">
               <Badge badgeContent={userProfile.credits_earned} color="error">
-                <Avatar src={CreditIcon}/>
+                <AutoAwesomeIcon style={{ fontSize: '40', marginRight: '8' }} />
               </Badge>
             </IconButton>
           </Tooltip>
-        </Box>
+        </Box>}
         <Box sx={{ flexGrow: 0 }}>
           <Tooltip title="Open Settings">
             <IconButton onClick={handleOpenUserMenu} sx={{ p: 0 }}>

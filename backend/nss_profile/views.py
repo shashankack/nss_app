@@ -13,48 +13,64 @@ class LoggedInUserAPIView(APIView):
     def get(self, request):
         self.permission_classes = [IsAuthenticated]
         self.check_permissions(request)
-        volunteer = Volunteer.objects.filter(user_id=request.user.id).first()
-        print(volunteer.user.first_name)
-        serializer = VolunteerSerializer(volunteer)
-        values = serializer.data
-        credits = Attendance.objects.filter(volunteer__user_id=request.user.id,
-                                            volunteer__role=volunteer.role,
-                                            volunteer__volunteering_year=NSSYear.current_year(),
-                                            ).select_related('event').values_list('event__credit_points', flat=True)
-        values['credits_earned'] = sum(list(credits))
+        admin = CollegeAdmin.objects.filter(id=request.user.id).first()
+        if admin:
+            serializer = CollegeAdminSerializer(admin)
+            values = serializer.data
+            values['role'] = 'Admin'
+        else:
+            volunteer = Volunteer.objects.filter(user_id=request.user.id).first()
+            print(volunteer.user.first_name)
+            serializer = VolunteerSerializer(volunteer)
+            values = serializer.data
+            credits = Attendance.objects.filter(volunteer__user_id=request.user.id,
+                                                volunteer__role=volunteer.role,
+                                                volunteer__volunteering_year=NSSYear.current_year(),
+                                                ).select_related('event').values_list('event__credit_points', flat=True)
+            values['credits_earned'] = sum(list(credits))
         return Response(values, status=status.HTTP_200_OK)
-        
-
-class VolunteerAPIView(APIView): #College Admin, Leader
-    permission_classes = [IsAuthenticated]
-    #TODO: Validate collgee for admin in all methods
-
-    def get_admins_college(self, user_id):
-        return CollegeAdmin.objects.get(user_id=user_id).college
     
-    def get_leaders_college(self, user_id, volunteering_year):
-        return Volunteer.objects.get(user_id=user_id, role=Volunteer.LEADER, volunteering_year=volunteering_year)
-        
+class VolunteerAPIView(APIView): #Volunteers, Leaders
+    permission_classes = [IsAuthenticated]
+    def get_college(self, user_id, volunteering_year):
+        return Volunteer.objects.get(user_id=user_id, volunteering_year=volunteering_year)
+    
+    def get(self, request):
+        college = self.get_college(request.user.id)
+        volunteers = Volunteer.objects.filter(course_college=college)
+        serializer = VolunteerSerializer(volunteers, many=True)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
+
+class ManageVolunteerAPIView(APIView): #College Admin
+    permission_classes = [IsAuthenticated]    
+    def get_admins_college(self, user_id):
+        try:
+            return CollegeAdmin.objects.get(user_id=user_id).college
+        except CollegeAdmin.DoesNotExist:
+            return None
 
     def get(self, request, volunteer_id = None):
-        college = self.get_leaders_college(request.user.id)
+        college = self.get_admins_college(request.user.id)
+        admin = CollegeAdmin.objects.filter(user = request.user.id).exists()
+        if not admin:
+            return Response('You are not authorized to view this content', status=status.HTTP_403_FORBIDDEN)
 
         if volunteer_id is not None:
-            volunteer = Volunteer.objects.filter(pk=volunteer_id, course_college=college).first()
+            volunteer = Volunteer.objects.filter(pk=volunteer_id, course__college=college).first()
             if volunteer:
                 serializer = VolunteerSerializer(volunteer)
                 return Response(serializer.data, status=status.HTTP_200_OK)
             else:
                 return Response("Invalid id or volunteer does not exist", status=status.HTTP_404_NOT_FOUND)         
         else:
-            volunteers = Volunteer.objects.filter(course_college=college)
+            volunteers = Volunteer.objects.filter(course__college=college)
             serializer = VolunteerSerializer(volunteers, many=True)
             return Response(serializer.data, status=status.HTTP_200_OK)        
 
-
     def post(self, request):
         volunteering_year = NSSYear.current_year()
-        college = self.get_leaders_college(request.user.id, volunteering_year)
+        college = self.get_admins_college(request.user.id, volunteering_year)
         data = request.data
         #TODO check if the courser and admin callege combination is acceptable
         user_data = data.get('user')
