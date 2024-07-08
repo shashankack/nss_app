@@ -146,7 +146,7 @@ const HomePage = () => {
   };
 
   const renderTable = (events) => (
-    <TableContainer
+  <TableContainer
   component={Paper}
   elevation={24}
   sx={{
@@ -173,7 +173,7 @@ const HomePage = () => {
       </TableRow>
     </TableHead>
     <TableBody>
-      {events.slice().map((event) => (
+      {events.map((event) => (
         <TableRow
           key={event.id}
           style={{ cursor: 'pointer' }}

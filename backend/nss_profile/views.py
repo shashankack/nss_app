@@ -58,13 +58,17 @@ class ManageVolunteerAPIView(APIView): #College Admin
 
         if volunteer_id is not None:
             volunteer = Volunteer.objects.filter(pk=volunteer_id, course__college=college).first()
+            
             if volunteer:
-                serializer = VolunteerSerializer(volunteer)
-                return Response(serializer.data, status=status.HTTP_200_OK)
+                if volunteer.user.is_active:
+                    serializer = VolunteerSerializer(volunteer)
+                    return Response(serializer.data, status=status.HTTP_200_OK)
+                else:
+                    return Response("Volunteer does not exist", status=status.HTTP_400_BAD_REQUEST)
             else:
-                return Response("Invalid id or volunteer does not exist", status=status.HTTP_404_NOT_FOUND)         
+                return Response("Volunteer does not exist", status=status.HTTP_404_NOT_FOUND)
         else:
-            volunteers = Volunteer.objects.filter(course__college=college)
+            volunteers = Volunteer.objects.filter(course__college=college, user__is_active=True)
             serializer = VolunteerSerializer(volunteers, many=True)
             return Response(serializer.data, status=status.HTTP_200_OK)        
 
@@ -105,13 +109,20 @@ class ManageVolunteerAPIView(APIView): #College Admin
         else:
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-    def delete(self, request, pk):
-        volunteer = Volunteer.objects.filter(pk=pk).first()
-        if not volunteer:
-            return Response("Volunteer does not exist", status=status.HTTP_404_NOT_FOUND)
+    def delete(self, request, volunteer_id):
+
+        college = self.get_admins_college(request.user.id)
+        admin = CollegeAdmin.objects.filter(user = request.user.id).exists()
+        if not admin:
+            return Response('You are not authorized to perform this action', status=status.HTTP_403_FORBIDDEN)
         
-        volunteer.delete()
-        return Response("Volunteer deleted successfully", status=status.HTTP_204_NO_CONTENT)
+        volunteer = Volunteer.objects.filter(pk=volunteer_id, course__college=college).first()
+        if not volunteer:
+            return Response("Volunteer not exist", status=status.HTTP_404_NOT_FOUND)
+        volunteer.user.is_active = False
+        volunteer.user.save()
+        return Response("Volunteer has been deleted", status=status.HTTP_204_NO_CONTENT)
+        
 
     def put(self, request, pk):
         volunteer = Volunteer.objects.filter(pk=pk).first()
@@ -162,24 +173,18 @@ class CollegeAPIView(APIView):
 
 
 class CoursesAPIView(APIView):
-    def get(self, request, college_id, course_id=None):
-        self.permission_classes = [IsAuthenticated]
-        self.check_permissions(request)
-        college = College.objects.filter(id=college_id).first()
-        if college:
-            if not course_id:
-                return Response("No courses available", status=status.HTTP_404_NOT_FOUND)
+    permission_classes = [IsAuthenticated]
+    def get_admins_college(self, user_id):
+        try:
+            return CollegeAdmin.objects.get(user_id=user_id).college
+        except CollegeAdmin.DoesNotExist:
+            return None
         
-            if course_id is None:   
-                courses = CollegeCourses.objects.all()
-                serializer = CollegeCoursesSerializer(courses, many=True)
-                return Response(serializer.data, status=status.HTTP_200_OK)
-            course = CollegeCourses.objects.filter(id=course_id).first()
-            if not course:
-                return Response("No courses available", status=status.HTTP_404_NOT_FOUND)
-            serializer = CollegeCoursesSerializer(course)
-            return Response(serializer.data, status=status.HTTP_200_OK)
-        return Response("College does not exist", status=status.HTTP_404_NOT_FOUND)      
+    def get(self, request):
+        college = self.get_admins_college(request.user.id)
+        courses = CollegeCourses.objects.filter(college=college)
+        serializer = CollegeCoursesSerializer(courses, many=True)
+        return Response(serializer.data, status=status.HTTP_200_OK)
 
     def post(self, request, college_id):
         self.permission_classes = [IsCollegeAdmin]

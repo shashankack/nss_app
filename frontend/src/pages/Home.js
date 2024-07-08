@@ -56,7 +56,7 @@ function HomeCard({ title, tagline, url, icon }) {
         return (
             <Container>
                 <Grid container spacing={6}>
-                    <HomeCard title="Manage Volunteers" tagline="Manage volunteers of your college." url="/manage-volunteers" icon={<Groups2Icon style={{ marginRight: 10, marginTop: '-0.5rem', fontSize: 60 }} />}/>
+                    <HomeCard title="Manage Volunteers" tagline="Manage volunteers of your college." url="admin/manage-volunteers" icon={<Groups2Icon style={{ marginRight: 10, marginTop: '-0.5rem', fontSize: 60 }} />}/>
                     <HomeCard title="Manage Events" tagline="Create and manage events." url="/events" icon={<EventIcon style={{ marginRight: 10, marginTop: '-0.5rem', fontSize: 60 }} />}/>
                     <HomeCard title="My Profile" tagline="View and edit your profile." url="/profile" icon={<PersonIcon style={{ marginRight: 10, marginTop: '-0.5rem', fontSize: 60 }} />}/>
                 </Grid>

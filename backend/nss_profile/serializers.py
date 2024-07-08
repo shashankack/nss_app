@@ -11,6 +11,8 @@ class VolunteerSerializer(serializers.ModelSerializer):
     email = serializers.CharField(source='user.email', read_only=True)
     first_name = serializers.CharField(source='user.first_name', read_only=True)
     last_name = serializers.CharField(source='user.last_name', read_only=True)
+    gender = serializers.CharField(source='user.gender', read_only=True)
+    blood_group = serializers.CharField(source='user.blood_group', read_only=True)
     college = serializers.SerializerMethodField()
     volunteering_year = serializers.SerializerMethodField()
 
