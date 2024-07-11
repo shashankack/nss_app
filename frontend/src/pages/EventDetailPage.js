@@ -1,25 +1,18 @@
-// EventDetailPage.js
 import React, { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
-import {
-  Container,
-  Typography,
-  CircularProgress,
-  Paper,
-  Grid,
-  TextField,
-  Button,
-  Accordion,
-  AccordionSummary,
-  AccordionDetails,
-} from '@mui/material';
+import { Container, Typography, CircularProgress, Paper, Grid, Avatar, Box, Button,
+         Divider, Accordion, AccordionSummary, AccordionDetails
+        } from '@mui/material';
 import PlaceIcon from '@mui/icons-material/Place';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import DescriptionIcon from '@mui/icons-material/Description';
 import AccessTimeIcon from '@mui/icons-material/AccessTime';
+import EventIcon from '@mui/icons-material/Event';
+import GroupIcon from '@mui/icons-material/Group';
 import Gallery from '../components/Gallery';
 import api from '../utils/api';
 import TransferListPopup from '../components/TransferListPopup';
+import logo from '../assets/nss_logo.png';
 
 const EventDetailPage = () => {
   const { id } = useParams();
@@ -58,119 +51,68 @@ const EventDetailPage = () => {
     );
   }
 
+  const formatDateWithDay = (dateString) => {
+    const date = new Date(dateString);
+    const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
+    return date.toLocaleDateString('en-US', options);
+  };
+
+  const formatTime = (dateString) => {
+    const date = new Date(dateString);
+    const options = {hour: '2-digit', minute: '2-digit'};
+    return date.toLocaleTimeString('en-US', options);
+  }
+
   return (
     <Container maxWidth="lg" sx={{ mt: 4 }}>
-      <Paper elevation={24} sx={{ p: 5, borderRadius: 5 }}>
-        <Grid container spacing={3}>
-          <Grid item xs={6}>
-            <Typography variant="h4" gutterBottom sx={{ fontWeight: 'bold' }}>
+      <Paper elevation={3} sx={{ p: 4, borderRadius: 3 }}>
+        <Box sx={{ display: 'flex', alignItems: 'center', mb: 3 }}>
+          <Avatar sx={{ bgcolor: 'primary.main', mr: 2, height: 60, width: 60 }} src={logo}></Avatar>
+          <Box>
+            <Typography variant="h5" sx={{ fontWeight: 'bold' }}>
               {event.name}
             </Typography>
-          </Grid>
-          <Grid item xs={6} sx={{ textAlign: 'right' }}>
-            <Button variant="outlined" onClick={() => setIsPopupOpen(true)}>Mark Attendance</Button>
-          </Grid>
-          <Grid item md={6} sm={12}>
-            <Accordion>
-              <AccordionSummary expandIcon={<ExpandMoreIcon />}>
-                <Typography variant="h6" color="textPrimary">
-                  <DescriptionIcon sx={{ mr: 1, verticalAlign: 'middle' }} />
-                  Description
-                </Typography>
-              </AccordionSummary>
-              <AccordionDetails>
-                <Typography variant="body1" color="textSecondary">
-                  {event.description}
-                </Typography>
-              </AccordionDetails>
-            </Accordion>
-          </Grid>
-          <Grid item md={6} sm={12}>
-            <Accordion>
-              <AccordionSummary expandIcon={<ExpandMoreIcon />}>
-                <Typography variant="h6" color="textPrimary">
-                  <DescriptionIcon sx={{ mr: 1, verticalAlign: 'middle' }} />
-                  Instructions
-                </Typography>
-              </AccordionSummary>
-              <AccordionDetails>
-                <Typography variant="body1" color="textSecondary">
-                  {event.instructions}
-                </Typography>
-              </AccordionDetails>
-            </Accordion>
+            <Typography variant="body2" color="textSecondary">
+              Organized by NSS 
+            </Typography>
+          </Box>
+        </Box>
+        <Divider sx={{ border: '1px solid', mb: 3 }}/>
+        <Typography variant="h6" gutterBottom>
+          Details
+        </Typography>
+        <Box sx={{ mb: 3 }}>
+          <Typography variant="body2" color="textSecondary">
+            {event.description}
+          </Typography>
+        </Box>
+        <Grid container spacing={2}>
+          <Grid item xs={12} sm={6}>
+            <Box sx={{ display: 'flex', alignItems: 'center' }}>
+              <AccessTimeIcon sx={{ mr: 1 }} />
+              <Typography variant="body2">
+                {formatDateWithDay(event.start_datetime)} from {formatTime(event.start_datetime)} to {formatTime(event.end_datetime)}
+              </Typography>
+            </Box>
           </Grid>
           <Grid item xs={12} sm={6}>
-            <TextField
-              fullWidth
-              label="Start Time"
-              value={new Date(event.start_datetime).toLocaleString()}
-              InputProps={{
-                startAdornment: <AccessTimeIcon sx={{ mr: 1 }} />,
-                readOnly: true,
-              }}
-              variant="outlined"
-            />
+            <Box sx={{ display: 'flex', alignItems: 'center' }}>
+              <GroupIcon sx={{ mr: 1 }} />
+              <Typography variant="body2">
+                {event.duration} - 12 people responded
+              </Typography>
+            </Box>
           </Grid>
           <Grid item xs={12} sm={6}>
-            <TextField
-              fullWidth
-              label="End Time"
-              value={new Date(event.end_datetime).toLocaleString()}
-              InputProps={{
-                startAdornment: <AccessTimeIcon sx={{ mr: 1 }} />,
-                readOnly: true,
-              }}
-              variant="outlined"
-            />
-          </Grid>
-          <Grid item xs={12}>
-            <TextField
-              fullWidth
-              label="Duration"
-              value={event.duration}
-              InputProps={{
-                readOnly: true,
-              }}
-              variant="outlined"
-            />
-          </Grid>
-          <Grid item xs={12}>
-            <TextField
-              fullWidth
-              label="Location"
-              value={event.location}
-              InputProps={{
-                startAdornment: <PlaceIcon sx={{ mr: 1 }} />,
-                readOnly: true,
-              }}
-              variant="outlined"
-            />
-          </Grid>
-          <Grid item xs={6}>
-            <TextField
-              label="Status"
-              fullWidth
-              value={event.status}
-              InputProps={{
-                readOnly: true,
-              }}
-              variant="outlined"
-            />
-          </Grid>
-          <Grid item xs={6}>
-            <TextField
-              label="Credit Points"
-              fullWidth
-              value={event.credit_points}
-              InputProps={{
-                readOnly: true,
-              }}
-              variant="outlined"
-            />
+            <Box sx={{ display: 'flex', alignItems: 'center' }}>
+              <PlaceIcon sx={{ mr: 1 }} />
+              <Typography variant="body2">
+                {event.location}
+              </Typography>
+            </Box>
           </Grid>
         </Grid>
-        <Accordion>
+        <Accordion sx={{ mt: 3 }}>
           <AccordionSummary expandIcon={<ExpandMoreIcon />}>
             <Typography variant="h6" color="textPrimary">
               <DescriptionIcon sx={{ mr: 1, verticalAlign: 'middle' }} />
@@ -181,6 +123,11 @@ const EventDetailPage = () => {
             <Gallery />
           </AccordionDetails>
         </Accordion>
+        <Box sx={{ display: 'flex', justifyContent: 'flex-end', mt: 3 }}>
+          <Button variant="outlined" onClick={() => setIsPopupOpen(true)}>
+            Mark Attendance
+          </Button>
+        </Box>
       </Paper>
       <TransferListPopup open={isPopupOpen} onClose={() => setIsPopupOpen(false)} eventId={id} />
     </Container>
