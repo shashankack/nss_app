@@ -1,18 +1,17 @@
 import React, { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { Container, Typography, CircularProgress, Paper, Grid, Avatar, Box, Button,
-         Divider, Accordion, AccordionSummary, AccordionDetails
+         Divider, Card, CardMedia, CardContent
         } from '@mui/material';
 import PlaceIcon from '@mui/icons-material/Place';
-import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import DescriptionIcon from '@mui/icons-material/Description';
+import PeopleIcon from '@mui/icons-material/People';
 import AccessTimeIcon from '@mui/icons-material/AccessTime';
 import EventIcon from '@mui/icons-material/Event';
-import GroupIcon from '@mui/icons-material/Group';
-import Gallery from '../components/Gallery';
 import api from '../utils/api';
 import TransferListPopup from '../components/TransferListPopup';
 import logo from '../assets/nss_logo.png';
+import img from '../assets/Gallery_Images/Trek/trek_1.jpg'
 
 const EventDetailPage = () => {
   const { id } = useParams();
@@ -64,73 +63,119 @@ const EventDetailPage = () => {
   }
 
   return (
-    <Container maxWidth="lg" sx={{ mt: 4 }}>
-      <Paper elevation={3} sx={{ p: 4, borderRadius: 3 }}>
-        <Box sx={{ display: 'flex', alignItems: 'center', mb: 3 }}>
-          <Avatar sx={{ bgcolor: 'primary.main', mr: 2, height: 60, width: 60 }} src={logo}></Avatar>
-          <Box>
-            <Typography variant="h5" sx={{ fontWeight: 'bold' }}>
-              {event.name}
-            </Typography>
-            <Typography variant="body2" color="textSecondary">
-              Organized by NSS 
-            </Typography>
-          </Box>
-        </Box>
-        <Divider sx={{ border: '1px solid', mb: 3 }}/>
-        <Typography variant="h6" gutterBottom>
-          Details
-        </Typography>
-        <Box sx={{ mb: 3 }}>
-          <Typography variant="body2" color="textSecondary">
-            {event.description}
-          </Typography>
-        </Box>
-        <Grid container spacing={2}>
-          <Grid item xs={12} sm={6}>
-            <Box sx={{ display: 'flex', alignItems: 'center' }}>
-              <AccessTimeIcon sx={{ mr: 1 }} />
-              <Typography variant="body2">
-                {formatDateWithDay(event.start_datetime)} from {formatTime(event.start_datetime)} to {formatTime(event.end_datetime)}
+    <Box
+    maxWidth="md"
+      sx={{
+        margin: 'auto',
+        padding: 2,
+        boxShadow: 3,
+        borderRadius: 2,
+        bgcolor: 'background.paper',
+      }}
+    >
+      <Card
+        sx={{
+          boxShadow: 5,
+          borderRadius: 2,
+        }}
+      >
+        <CardMedia
+          component="img"
+          height="300"
+          image="https://placehold.co/600x400"
+          alt="Event Image"
+        />
+        <CardContent>
+          <Box
+            sx={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: 2,
+              mb: 2,
+            }}
+          >
+            <Avatar sx={{ bgcolor: 'primary.main' }}>
+              <EventIcon />
+            </Avatar>
+            <Box>
+              <Typography variant="h6" component="div">
+                {event.name}
+              </Typography>
+              <Typography variant="body2" color="text.primary">
+                {formatDateWithDay(event.start_datetime)} from {formatTime(event.start_datetime)} - {formatTime(event.end_datetime)}
               </Typography>
             </Box>
-          </Grid>
-          <Grid item xs={12} sm={6}>
-            <Box sx={{ display: 'flex', alignItems: 'center' }}>
-              <GroupIcon sx={{ mr: 1 }} />
-              <Typography variant="body2">
-                {event.duration} - 12 people responded
-              </Typography>
-            </Box>
-          </Grid>
-          <Grid item xs={12} sm={6}>
-            <Box sx={{ display: 'flex', alignItems: 'center' }}>
-              <PlaceIcon sx={{ mr: 1 }} />
-              <Typography variant="body2">
-                {event.location}
-              </Typography>
-            </Box>
-          </Grid>
-        </Grid>
-        <Accordion sx={{ mt: 3 }}>
-          <AccordionSummary expandIcon={<ExpandMoreIcon />}>
-            <Typography variant="h6" color="textPrimary">
-              <DescriptionIcon sx={{ mr: 1, verticalAlign: 'middle' }} />
-              Event Gallery
-            </Typography>
-          </AccordionSummary>
-          <AccordionDetails>
-            <Gallery />
-          </AccordionDetails>
-        </Accordion>
-        <Box sx={{ display: 'flex', justifyContent: 'flex-end', mt: 3 }}>
-          <Button variant="outlined" onClick={() => setIsPopupOpen(true)}>
+            <Button
+              variant="contained"
+              color="primary"
+              sx={{ ml: 'auto', boxShadow: 3 }}
+          >
             Mark Attendance
           </Button>
-        </Box>
-      </Paper>
-      <TransferListPopup open={isPopupOpen} onClose={() => setIsPopupOpen(false)} eventId={id} />
-    </Container>
+          </Box>
+          <Divider sx={{ my: 2 }} />
+          <Box
+            sx={{
+              display: 'flex',
+              flexDirection: 'column',
+              gap: 2,
+            }}
+          >
+            <Box
+              sx={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: 1,
+              }}
+            >
+            <Typography variant="body2" paragraph>
+              <DescriptionIcon />
+            {event.description}
+          </Typography>
+          </Box>
+            <Box
+              sx={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: 1,
+              }}
+            >
+              <AccessTimeIcon />
+              <Typography variant="body2">{event.duration}</Typography>
+            </Box>
+            <Box
+              sx={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: 1,
+              }}
+            >
+              <PeopleIcon />
+              <Typography variant="body2">12 people responded</Typography>
+            </Box>
+            <Box
+              sx={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: 1,
+              }}
+            >
+              <Avatar
+                alt="National Service Scheme"
+                src={logo}
+                sx={{ width: 24, height: 24 }}
+              />
+              <Typography variant="body2">Event by NSS {event.college_name}</Typography>
+            </Box>
+          </Box>
+          <Divider sx={{ my: 2 }} />
+          <Typography variant="body2" paragraph>
+            <DescriptionIcon />
+            {event.instructions}
+          </Typography>
+        </CardContent>
+      </Card>
+    </Box>
   );
 };
 

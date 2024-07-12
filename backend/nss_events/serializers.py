@@ -3,6 +3,8 @@ from .models import Events, Attendance
 from nss_profile.models import Volunteer
 
 class EventSerializer(serializers.ModelSerializer):
+    college_name = serializers.CharField(source='college.college_name', read_only=True)
+
     class Meta:
         model = Events
         fields = '__all__'
