@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import {
   Container, Tabs, Tab, Box, Typography, Table, TableBody, TableCell, TableContainer, TableHead,
-  TableRow, Paper, CircularProgress, Button, Dialog, DialogActions, DialogContent, DialogContentText,
-  DialogTitle, TextField, IconButton, Grid
+  TableRow, Paper, Button, Dialog, DialogActions, DialogContent, DialogContentText,
+  DialogTitle, IconButton, Grid, TextField, Divider, CircularProgress
 } from '@mui/material';
 import EditIcon from '@mui/icons-material/Edit';
 import AddIcon from '@mui/icons-material/Add';
@@ -10,8 +10,10 @@ import DeleteIcon from '@mui/icons-material/Delete';
 import { format } from 'date-fns';
 import { useNavigate } from 'react-router-dom';
 import api from '../utils/api';
-
-
+import { createTheme } from "@mui/material/styles";
+import MUIRichTextEditor from 'mui-rte';
+import { stateToHTML } from 'draft-js-export-html';
+import { stateFromHTML } from 'draft-js-import-html';
 const fetchEvents = async (status) => {
   return await api.get(`/event?status=${status}`);
 };
@@ -20,14 +22,16 @@ const fetchAttendedEvents = async () => {
   return await api.get('/volunteer/eventsAttended');
 };
 
+const myTheme = createTheme();
+
 const fetchUserRole = async () => {
   const response = await api.get('/loggedinuser/');
-  return response.data.role
+  return response.data.role;
 };
 
+// TabPanel Component
 const TabPanel = (props) => {
   const { children, value, index, ...other } = props;
-
   return (
     <div
       role="tabpanel"
@@ -49,6 +53,7 @@ const HomePage = () => {
   const [value, setValue] = useState(0);
   const [openDialog, setOpenDialog] = useState(false);
   const [editDialog, setEditDialog] = useState(false);
+  const [deleteDialog, setDeleteDialog] = useState(false);
   const [userRole, setUserRole] = useState('');
   const [newEvent, setNewEvent] = useState({
     name: '',
@@ -61,6 +66,7 @@ const HomePage = () => {
     duration: '',
   });
   const [selectedEvent, setSelectedEvent] = useState({});
+  const [eventToDelete, setEventToDelete] = useState(null);
   const [errors, setErrors] = useState({});
   const [editErrors, setEditErrors] = useState({});
 
@@ -81,6 +87,20 @@ const HomePage = () => {
     }
   };
 
+  const formatDateTimeLocal = (dateString) => {
+    if (!dateString) return '';
+    const date = new Date(dateString);
+    const pad = (n) => n < 10 ? '0' + n : n;
+  
+    const year = date.getFullYear();
+    const month = pad(date.getMonth() + 1);
+    const day = pad(date.getDate());
+    const hours = pad(date.getHours());
+    const minutes = pad(date.getMinutes());
+  
+    return `${year}-${month}-${day}T${hours}:${minutes}`;
+  };
+  
   useEffect(() => {
     const initializeData = async () => {
       try {
@@ -93,25 +113,6 @@ const HomePage = () => {
     };
 
     initializeData();
-  }, []);
-
-  useEffect(() => {
-    const fetchData = async () => {
-      try {
-        const openData = await fetchEvents('Open');
-        setOpenEvents(openData.data);
-        const attendedData = await fetchAttendedEvents();
-        setAttendedEvents(attendedData.data);
-        const completedData = await fetchCompletedEvents(attendedData.data);
-        setCompletedEvents(completedData);
-      } catch (error) {
-        console.error('Failed to fetch events:', error);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchData();
   }, []);
 
   const fetchCompletedEvents = async (attendedE) => {
@@ -135,7 +136,7 @@ const HomePage = () => {
     setEditDialog(true);
   };
 
-  const handleDelete = async (eventId) => {
+/*   const handleDelete = async (eventId) => {
     try {
       await api.delete(`/event/${eventId}/`);
       setOpenEvents(openEvents.filter((event) => event.id !== eventId));
@@ -143,75 +144,65 @@ const HomePage = () => {
     } catch (error) {
       console.error('Failed to delete event:', error);
     }
-  };
+  }; */
 
   const renderTable = (events) => (
-  <TableContainer
-  component={Paper}
-  elevation={24}
-  sx={{
-    maxHeight: 300,
-    overflowY: 'auto',
-    '&::-webkit-scrollbar': { display: 'none'},
-  }}
->
-  <Table stickyHeader>
-    <TableHead
+    <TableContainer
+      component={Paper}
+      elevation={24}
       sx={{
-        '& th': { backgroundColor: 'primary.main', color: 'white' },
+        maxHeight: 300,
+        overflowY: 'auto',
+        '&::-webkit-scrollbar': { display: 'none' },
       }}
     >
-      <TableRow>
-        <TableCell>Name</TableCell>
-        {/* <TableCell>Description</TableCell> */}
-        <TableCell>Start Date</TableCell>
-        <TableCell>Start Time</TableCell>
-        <TableCell>Location</TableCell>
-        <TableCell>Credit Points</TableCell>
-        {value === 0 && userRole === "Leader" && <TableCell>Actions</TableCell>}
-        {value === 1 && <TableCell>Earned Points</TableCell>}
-      </TableRow>
-    </TableHead>
-    <TableBody>
-      {events.map((event) => (
-        <TableRow
-          key={event.id}
-          style={{ cursor: 'pointer' }}
-          onMouseEnter={(e) => {
-            if (!e.target.closest('IconButton')) {
-              e.target.parentNode.style.backgroundColor = '#F2F3F4';
-            }
-          }}
-          onMouseLeave={(e) => {
-            e.target.parentNode.style.backgroundColor = 'inherit';
-          }}
-        >
-          <TableCell onClick={() => handleRowClick(event.id)}><Typography noWrap="false">{event.name}</Typography></TableCell>
-          {/* <TableCell onClick={() => handleRowClick(event.id)}>{event.description}</TableCell> */}
-          <TableCell onClick={() => handleRowClick(event.id)}>{format(new Date(event.start_datetime), 'dd/MM/yyyy')}</TableCell>
-          <TableCell onClick={() => handleRowClick(event.id)}>{format(new Date(event.start_datetime), 'hh:mm a')}</TableCell>
-          <TableCell onClick={() => handleRowClick(event.id)}>{event.location}</TableCell>
-          <TableCell onClick={() => handleRowClick(event.id)}>{event.credit_points}</TableCell>
-          {value === 0 && userRole === "Leader" && (
-            <TableCell>
-              <IconButton color="primary" onClick={() => handleEdit(event)}>
-                <EditIcon sx={{ mt: -2, mb: -2 }} />
-              </IconButton>
-              <IconButton
-                sx={{ color: 'rgb(198, 40, 50)' }}
-                onClick={() => handleDelete(event.id)}
-              >
-                <DeleteIcon sx={{ mt: -2, mb: -2 }} />
-              </IconButton>
-            </TableCell>
-          )}
-          {value === 1 && <TableCell>{event.earned_points}</TableCell>}
-        </TableRow>
-      ))}
-    </TableBody>
-  </Table>
-</TableContainer>
-
+      <Table stickyHeader>
+        <TableHead sx={{ '& th': { backgroundColor: 'primary.main', color: 'white' } }}>
+          <TableRow>
+            <TableCell>Name</TableCell>
+            <TableCell>Start Date</TableCell>
+            <TableCell>Start Time</TableCell>
+            <TableCell>Location</TableCell>
+            <TableCell>Credit Points</TableCell>
+            {value === 0 && userRole === "Leader" && <TableCell>Actions</TableCell>}
+            {value === 1 && <TableCell>Earned Points</TableCell>}
+          </TableRow>
+        </TableHead>
+        <TableBody>
+          {events.map((event) => (
+            <TableRow
+              key={event.id}
+              style={{ cursor: 'pointer' }}
+              onMouseEnter={(e) => {
+                if (!e.target.closest('IconButton')) {
+                  e.target.parentNode.style.backgroundColor = '#F2F3F4';
+                }
+              }}
+              onMouseLeave={(e) => {
+                e.target.parentNode.style.backgroundColor = 'inherit';
+              }}
+            >
+              <TableCell onClick={() => handleRowClick(event.id)}><Typography noWrap="false">{event.name}</Typography></TableCell>
+              <TableCell onClick={() => handleRowClick(event.id)}>{format(new Date(event.start_datetime), 'dd/MM/yyyy')}</TableCell>
+              <TableCell onClick={() => handleRowClick(event.id)}>{format(new Date(event.start_datetime), 'hh:mm a')}</TableCell>
+              <TableCell onClick={() => handleRowClick(event.id)}>{event.location}</TableCell>
+              <TableCell onClick={() => handleRowClick(event.id)}>{event.credit_points}</TableCell>
+              {value === 0 && userRole === "Leader" && (
+                <TableCell>
+                  <IconButton color="primary" onClick={() => handleEdit(event)}>
+                    <EditIcon sx={{ mt: -2, mb: -2 }} />
+                  </IconButton>
+                  <IconButton sx={{ color: 'rgb(198, 40, 50)' }} onClick={() => handleOpenDeleteDialog(event.id)}>
+                    <DeleteIcon sx={{ mt: -2, mb: -2 }} />
+                  </IconButton>
+                </TableCell>
+              )}
+              {value === 1 && <TableCell>{event.earned_points}</TableCell>}
+            </TableRow>
+          ))}
+        </TableBody>
+      </Table>
+    </TableContainer>
   );
 
   const validateForm = (event) => {
@@ -237,6 +228,30 @@ const HomePage = () => {
     setErrors({});
   };
 
+  const handleOpenDeleteDialog = (eventId) => {
+    setEventToDelete(eventId);
+    setDeleteDialog(true);
+  }
+
+  const handleCloseDeleteDialog = () => {
+    setEventToDelete(null);
+    setDeleteDialog(false);
+  }
+
+  const handleConfirmDelete = async () => {
+    if (eventToDelete) {
+      try {
+        await api.delete(`/event/${eventToDelete}/`);
+        setOpenEvents(openEvents.filter((event) => event.id !== eventToDelete));
+        console.log('Event deleted successfully');
+      } catch (error) {
+        console.error('Failed to delete event:', error);
+      } finally {
+        handleCloseDeleteDialog();
+      }
+    }
+  };
+
   const handleCloseEditDialog = () => {
     setEditDialog(false);
     setEditErrors({});
@@ -247,9 +262,17 @@ const HomePage = () => {
     setNewEvent({ ...newEvent, [name]: value });
   };
 
+  const handleEditorChange = (value, ) => {
+    setNewEvent({ ...newEvent, description: stateToHTML(value.getCurrentContent())});
+  };
+
   const handleEditInputChange = (event) => {
     const { name, value } = event.target;
     setSelectedEvent({ ...selectedEvent, [name]: value });
+  };
+
+  const handleEditEditorChange = (value) => {
+    setSelectedEvent({ ...selectedEvent, description: value });
   };
 
   const handleSubmit = async (event) => {
@@ -257,7 +280,6 @@ const HomePage = () => {
     const newErrors = validateForm(newEvent);
     if (Object.keys(newErrors).length > 0) {
       setErrors(newErrors);
-      fetchData();
       return;
     }
 
@@ -266,7 +288,6 @@ const HomePage = () => {
       fetchData();
       console.log('Event created successfully:', response.data);
       handleCloseDialog();
-      // Optionally, refresh the event lists
     } catch (error) {
       console.error('Failed to create event:', error);
     }
@@ -274,13 +295,17 @@ const HomePage = () => {
 
   const handleEditSubmit = async (event) => {
     event.preventDefault();
+    const newEditErrors = validateForm(selectedEvent);
+    if (Object.keys(newEditErrors).length > 0) {
+      setEditErrors(newEditErrors);
+      return;
+    }
 
     try {
       const response = await api.put(`/event/${selectedEvent.id}/`, selectedEvent);
+      fetchData();
       console.log('Event updated successfully:', response.data);
       handleCloseEditDialog();
-      fetchData();
-      // Optionally, refresh the event lists
     } catch (error) {
       console.error('Failed to update event:', error);
     }
@@ -288,51 +313,28 @@ const HomePage = () => {
 
   if (loading) {
     return (
-      <Container
-        sx={{
-          display: 'flex',
-          justifyContent: 'center',
-          alignItems: 'center',
-          height: '100vh',
-        }}
-      >
+      <Box
+      display="flex"
+      justifyContent="center"
+      alignItems="center"
+      height="100vh" >
         <CircularProgress />
-      </Container>
-    );
+      </Box>
+    )
   }
 
-  return(
+  return (
     <Container>
-      <Box
-        sx={{
-          borderBottom: 1,
-          borderColor: 'divider',
-          display: 'flex',
-          justifyContent: 'space-between',
-          alignItems: 'center',
-          mt: 20,
-          borderRadius:2
-        }}>
-        <Tabs value={value} onChange={handleChange} aria-label="event tabs">
+      <Box sx={{ width: '97%', mt: 50 }}>
+        <Tabs value={value} onChange={handleChange} textColor="primary" indicatorColor="primary">
           <Tab label="Open Events" />
           <Tab label="Completed Events" />
+          <Box sx={{ display: 'flex', ml: 'auto' }}>
+            <Button variant="contained" onClick={handleOpenDialog} startIcon={<AddIcon />}>
+              New Event
+            </Button>
+        </Box>
         </Tabs>
-        {userRole === "Leader" && (
-        <Button 
-          variant="outlined"
-          color="primary"
-          onClick={handleOpenDialog}
-          sx={{ mr: 10, transition: 'all 0.3s ease',
-            '&:hover': {
-              backgroundColor: 'primary.main',
-              color: "#ffffff",
-              transform: 'scale(1)',
-            }, }}
-          startIcon={<AddIcon/>}
-        >
-          New Event
-        </Button>
-        )}
       </Box>
       <TabPanel value={value} index={0}>
         {renderTable(openEvents)}
@@ -340,77 +342,26 @@ const HomePage = () => {
       <TabPanel value={value} index={1}>
         {renderTable(completedEvents)}
       </TabPanel>
-      <Dialog open={openDialog} onClose={handleCloseDialog}>
-        <DialogTitle>New Event</DialogTitle>
+
+      {/* New Event Dialog */}
+      <Dialog open={openDialog} onClose={handleCloseDialog} maxWidth='lg'>
+        <DialogTitle>Create New Event</DialogTitle>
         <DialogContent>
           <DialogContentText>
-            Please fill in the details of the new event.
+            Please fill out the following details to create a new event.
           </DialogContentText>
-          <Grid container spacing={2}>
-            <Grid item xs={12}>
+          <Grid container spacing={2} marginTop={2}>
+            <Grid item xs={6}>
               <TextField
                 autoFocus
                 margin="dense"
                 name="name"
                 label="Event Name"
-                type="text"
+                variant="outlined"
                 fullWidth
-                value={newEvent.name}
                 onChange={handleInputChange}
                 error={!!errors.name}
                 helperText={errors.name}
-              />
-            </Grid>
-            <Grid item xs={12}>
-              <TextField
-                margin="dense"
-                name="description"
-                label="Event Description"
-                type="text"
-                fullWidth
-                value={newEvent.description}
-                onChange={handleInputChange}
-                error={!!errors.description}
-                helperText={errors.description}
-              />
-            </Grid>
-            <Grid item xs={6}>
-              <Grid item>Start Date and Time</Grid>
-              <TextField
-                margin="dense"
-                name="start_datetime"
-                type="datetime-local"
-                fullWidth
-                value={newEvent.start_datetime}
-                onChange={handleInputChange}
-                error={!!errors.start_datetime}
-                helperText={errors.start_datetime}
-              />
-            </Grid>
-            <Grid item xs={6}>
-            <Grid item>End Date and Time</Grid>
-              <TextField
-                margin="dense"
-                name="end_datetime"
-                type="datetime-local"
-                fullWidth
-                value={newEvent.end_datetime}
-                onChange={handleInputChange}
-                error={!!errors.end_datetime}
-                helperText={errors.end_datetime}
-              />
-            </Grid>
-            <Grid item xs={12}>
-              <TextField
-                margin="dense"
-                name="location"
-                label="Event Location"
-                type="text"
-                fullWidth
-                value={newEvent.location}
-                onChange={handleInputChange}
-                error={!!errors.location}
-                helperText={errors.location}
               />
             </Grid>
             <Grid item xs={6}>
@@ -419,207 +370,254 @@ const HomePage = () => {
                 name="credit_points"
                 label="Credit Points"
                 type="number"
+                variant="outlined"
                 fullWidth
-                value={newEvent.credit_points}
                 onChange={handleInputChange}
                 error={!!errors.credit_points}
                 helperText={errors.credit_points}
               />
             </Grid>
-            <Grid item xs={6}>
+            <Grid item xs={4}>
+              <TextField
+                margin="dense"
+                name="start_datetime"
+                label="Start Date"
+                type="datetime-local"
+                variant="outlined"
+                fullWidth
+                onChange={handleInputChange}
+                error={!!errors.start_datetime}
+                helperText={errors.start_datetime}
+                InputLabelProps={{
+                  shrink: true, // This is necessary to keep the label visible when using datetime-local
+                }}
+                inputProps={{
+                  placeholder: '',
+                }}
+              />
+            </Grid>
+            <Grid item xs={4}>
+              <TextField
+                margin="dense"
+                name="end_datetime"
+                label="End Date"
+                type="datetime-local"
+                variant="outlined"
+                fullWidth
+                onChange={handleInputChange}
+                error={!!errors.end_datetime}
+                helperText={errors.end_datetime}
+                InputLabelProps={{
+                  shrink: true, // This is necessary to keep the label visible when using datetime-local
+                }}
+                inputProps={{
+                  placeholder: '',
+                }}
+              />
+            </Grid>
+            <Grid item xs={4}>
               <TextField
                 margin="dense"
                 name="duration"
-                label="Duration"
-                type="text"
+                label="Duration (in hours)"
+                type="number"
+                variant="outlined"
                 fullWidth
-                value={newEvent.duration}
                 onChange={handleInputChange}
                 error={!!errors.duration}
                 helperText={errors.duration}
               />
             </Grid>
             <Grid item xs={12}>
-              <TextField
-                margin="dense"
-                name="instructions"
-                label="Instructions"
-                type="text"
-                multiline={true}
-                fullWidth
-                value={newEvent.instructions}
-                onChange={handleInputChange}
-                error={!!errors.instructions}
-                helperText={errors.instructions}
-              />
-            </Grid>
-          </Grid>
-          </DialogContent>
-        <DialogActions>
-          <Button onClick={handleCloseDialog} color="error" variant="outlined" sx={{transition: 'all 0.3s ease',
-                  '&:hover': {
-                    backgroundColor: 'error.main',
-                    color: "#ffffff",
-                    transform: 'scale(1)',
-              },}}>
-            Cancel
-          </Button>
-          <Button onClick={handleSubmit} 
-          color="primary"
-          variant="outlined"
-          sx={{
-            transition: 'all 0.3s ease',
-                  '&:hover': {
-                    backgroundColor: 'primary.main',
-                    color: "#ffffff",
-                    transform: 'scale(1)',
-              },
-          }}>
-            Create
-          </Button>
-        </DialogActions>
-      </Dialog>
-
-      <Dialog open={editDialog} onClose={handleCloseEditDialog}>
-        <DialogTitle>Edit Event</DialogTitle>
-        <DialogContent>
-          <DialogContentText sx={{mb:2}}>
-            Please edit the details of the event.
-          </DialogContentText>
-          <Grid container spacing={2}>
-            <Grid item xs={12}>
-              <TextField
-                autoFocus
-                margin="dense"
-                name="name"
-                label="Event Name"
-                type="text"
-                fullWidth
-                value={selectedEvent.name}
-                onChange={handleEditInputChange}
-                error={!!editErrors.name}
-                helperText={editErrors.name}/>
+              <Box style={{ border: '1px solid black', padding: '8px' }}>
+                <MUIRichTextEditor
+                  label="Event Description"
+                  onChange={handleEditorChange}
+                  error={!!errors.description}
+                  helperText={errors.description}
+                />
+                <Divider />
+                <Typography variant="subtitle1" style={{ marginBottom: '8px' }}>
+                  Event Description...
+                </Typography>
+              </Box>
             </Grid>
             <Grid item xs={12}>
-              <TextField
-                margin="dense"
-                name="description"
-                label="Event Description"
-                type="text"
-                fullWidth
-                value={selectedEvent.description}
-                onChange={handleEditInputChange}
-                error={!!editErrors.description}
-                helperText={editErrors.description}/>
-            </Grid>
-            <Grid item xs={6}>
-              <TextField
-                margin="dense"
-                name="start_datetime"
-                label="Start Date and Time"
-                type="datetime-local"
-                fullWidth
-                value={selectedEvent.start_datetime}
-                onChange={handleEditInputChange}
-                error={!!editErrors.start_datetime}
-                helperText={editErrors.start_datetime}/>
-            </Grid>
-            <Grid item xs={6}>
-              <TextField
-                margin="dense"
-                name="end_datetime"
-                label="End Date and Time"
-                type="datetime-local"
-                fullWidth
-                value={selectedEvent.end_datetime}
-                onChange={handleEditInputChange}
-                error={!!editErrors.end_datetime}
-                helperText={editErrors.end_datetime}/>
+            <Box style={{ border: '1px solid black', padding: '8px' }}>
+                <MUIRichTextEditor
+                  label="Instructions for volunteers..."
+                  onChange={handleEditorChange}
+                  error={!!errors.instructions}
+                  helperText={errors.instructions}
+                />
+                <Divider />
+                <Typography variant="subtitle1" style={{ marginBottom: '8px' }}>
+                  Instructions for volunteers...
+                </Typography>
+              </Box>
             </Grid>
             <Grid item xs={12}>
               <TextField
                 margin="dense"
                 name="location"
-                label="Event Location"
-                type="text"
+                label="Location"
+                variant="outlined"
                 fullWidth
-                value={selectedEvent.location}
-                onChange={handleEditInputChange}
-                error={!!editErrors.location}
-                helperText={editErrors.location}/>
-            </Grid>
-            <Grid item xs={12}>
-              <TextField
-                margin="dense"
-                name="Status"
-                label="Event Status"
-                type="text"
-                fullWidth
-                value={selectedEvent.status}
-                onChange={handleEditInputChange}
-                error={!!editErrors.status}
-                helperText={editErrors.status}/>
-            </Grid>
-            <Grid item xs={6}>
-              <TextField
-                margin="dense"
-                name="credit_points"
-                label="Credit Points"
-                type="number"
-                fullWidth
-                value={selectedEvent.credit_points}
-                onChange={handleEditInputChange}
-                error={!!editErrors.credit_points}
-                helperText={editErrors.credit_points}/>
-            </Grid>
-            <Grid item xs={6}>
-              <TextField
-                margin="dense"
-                name="duration"
-                label="Duration"
-                type="text"
-                fullWidth
-                value={selectedEvent.duration}
-                onChange={handleEditInputChange}
-                error={!!editErrors.duration}
-                helperText={editErrors.duration}/>
-            </Grid>
-            <Grid item xs={12}>
-              <TextField
-                margin="dense"
-                name="instructions"
-                label="Instructions"
-                type="text"
-                multiline={true}
-                fullWidth
-                value={selectedEvent.instructions}
-                onChange={handleEditInputChange}
-                error={!!editErrors.instructions}
-                helperText={editErrors.instructions}/>
+                onChange={handleInputChange}
+                error={!!errors.location}
+                helperText={errors.location}
+              />
             </Grid>
           </Grid>
         </DialogContent>
         <DialogActions>
-          <Button onClick={handleCloseEditDialog} color="error" variant="outlined" sx={{transition: 'all 0.3s ease',
-                  '&:hover': {
-                    backgroundColor: 'error.main',
-                    color: "#ffffff",
-                    transform: 'scale(1)',
-                  },}}>
-            Cancel
-          </Button>
-          <Button
-           onClick={handleEditSubmit}
-           color="primary" variant="outlined"
-           sx={{
-                transition: 'all 0.3s ease',
-                  '&:hover': {
-                    backgroundColor: 'primary.main',
-                    color: "#ffffff",
-                    transform: 'scale(1)',
-              },}}>
-            Update
-          </Button>
+          <Button onClick={handleCloseDialog}>Cancel</Button>
+          <Button onClick={handleSubmit}>Create Event</Button>
+        </DialogActions>
+      </Dialog>
+
+
+      {/* Edit Event Dialog */}
+      <Dialog open={editDialog} onClose={handleCloseEditDialog} maxWidth= 'lg'>
+        <DialogTitle variant="h4">Edit Event</DialogTitle>
+          <DialogContent>
+            <DialogContentText>
+              Please update the following details for the event.
+            </DialogContentText>
+            <Divider sx={{ borderColor: '#000000'}} />
+            <Grid container spacing={2} marginTop={5}>
+              <Grid item xs={6}>
+                <TextField
+                  autoFocus
+                  margin="dense"
+                  name="name"
+                  label="Event Name"
+                  fullWidth
+                  variant="outlined"
+                  value={selectedEvent.name}
+                  onChange={handleEditInputChange}
+                  error={!!editErrors.name}
+                  helperText={editErrors.name}
+                />
+              </Grid>
+              <Grid item xs={6}>
+                <TextField
+                  margin="dense"
+                  name="credit_points"
+                  label="Credit Points"
+                  type="number"
+                  fullWidth
+                  variant="outlined"
+                  value={selectedEvent.credit_points}
+                  onChange={handleEditInputChange}
+                  error={!!editErrors.credit_points}
+                  helperText={editErrors.credit_points}
+                />
+              </Grid>
+              <Grid item xs={4}>
+                <TextField
+                  margin="dense"
+                  name="start_datetime"
+                  label="Start Date"
+                  type="datetime-local"
+                  fullWidth
+                  variant="outlined"
+                  value={formatDateTimeLocal(selectedEvent.start_datetime)}
+                  onChange={handleEditInputChange}
+                  error={!!editErrors.start_datetime}
+                  helperText={editErrors.start_datetime}
+                />
+              </Grid>
+              <Grid item xs={4}>
+                <TextField
+                  margin="dense"
+                  name="end_datetime"
+                  label="End Date"
+                  type="datetime-local"
+                  fullWidth
+                  variant="outlined"
+                  value={formatDateTimeLocal(selectedEvent.end_datetime)}
+                  onChange={handleEditInputChange}
+                  error={!!editErrors.end_datetime}
+                  helperText={editErrors.end_datetime}
+                />
+              </Grid>
+              <Grid item xs={4}>
+                  <TextField
+                    margin="dense"
+                    name="duration"
+                    label="Duration (in hours)"
+                    type="number"
+                    fullWidth
+                    variant="outlined"
+                    value={selectedEvent.duration}
+                    onChange={handleEditInputChange}
+                    error={!!editErrors.duration}
+                    helperText={editErrors.duration}
+                  />
+              </Grid>
+              <Grid item xs={12}>
+                <Box style={{ border: '1px solid grey', borderRadius: 5, padding: '8px' }}>
+                  <MUIRichTextEditor
+                    label="Event Description"
+                    state={selectedEvent.description ? stateFromHTML(selectedEvent.description) :  null}
+                    onChange={handleEditEditorChange}
+                    error={!!editErrors.description}
+                    helperText={editErrors.description}
+                  />
+                  <Divider />
+                <Typography variant="subtitle1" style={{ marginBottom: '8px' }}>
+                  Event Description...
+                </Typography>
+                </Box>
+              </Grid>
+              <Grid item xs={12}>
+              <Box style={{ border: '1px solid grey', borderRadius: 5, padding: '8px' }}>
+                  <MUIRichTextEditor
+                    label="Instructions to volunteers..."
+                    state={selectedEvent.instructions ? stateFromHTML(selectedEvent.instructions) :  null}
+                    onChange={handleEditEditorChange}
+                    error={!!editErrors.instructions}
+                    helperText={editErrors.instructions}
+                  />
+                  <Divider />
+                <Typography variant="subtitle1" style={{ marginBottom: '8px' }}>
+                  Instructions to volunteers...
+                </Typography>
+                </Box>
+              </Grid>
+              <Grid item xs={12}>
+                <TextField
+                  margin="dense"
+                  name="location"
+                  label="Location"
+                  fullWidth
+                  variant="outlined"
+                  value={selectedEvent.location}
+                  onChange={handleEditInputChange}
+                  error={!!editErrors.location}
+                  helperText={editErrors.location}
+                />
+              </Grid>
+            </Grid>
+          </DialogContent>
+        <DialogActions>
+          <Button onClick={handleCloseEditDialog} variant='outlined' color='error'>Cancel</Button>
+          <Button onClick={handleEditSubmit} variant='outlined' color='primary'>Update Event</Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* Delete Event Dialog */}
+      <Dialog open={deleteDialog} onClose={handleCloseDeleteDialog}>
+        <DialogTitle>Delete Event</DialogTitle>
+        <DialogContent>
+          <DialogContentText>
+            Are you sure you want to delete this event?
+          </DialogContentText>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={handleCloseDeleteDialog}>Cancel</Button>
+          <Button onClick={handleConfirmDelete} color="error">Delete</Button>
         </DialogActions>
       </Dialog>
     </Container>

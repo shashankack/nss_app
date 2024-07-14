@@ -1,182 +1,157 @@
-import React, { useEffect, useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
-import { Container, Typography, CircularProgress, Paper, Grid, Avatar, Box, Button,
-         Divider, Card, CardMedia, CardContent
-        } from '@mui/material';
-import PlaceIcon from '@mui/icons-material/Place';
-import DescriptionIcon from '@mui/icons-material/Description';
-import PeopleIcon from '@mui/icons-material/People';
-import AccessTimeIcon from '@mui/icons-material/AccessTime';
-import EventIcon from '@mui/icons-material/Event';
+import { Container, Typography, Button, Box, Avatar, TextField, Accordion, Grid, AccordionSummary, AccordionDetails } from '@mui/material';
+import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import api from '../utils/api';
-import TransferListPopup from '../components/TransferListPopup';
-import logo from '../assets/nss_logo.png';
-import img from '../assets/Gallery_Images/Trek/trek_1.jpg'
+import ImageCarousel from '../components/ImageCarousel';
 
-const EventDetailPage = () => {
+const EventDetails = () => {
   const { id } = useParams();
   const [event, setEvent] = useState(null);
-  const [loading, setLoading] = useState(true);
-  const [isPopupOpen, setIsPopupOpen] = useState(false);
+  const [status, setStatus] = useState('');
+  const [comments, setComments] = useState([]);
+  const [newComment, setNewComment] = useState('');
 
   useEffect(() => {
     const fetchEventDetails = async () => {
       try {
         const response = await api.get(`/event/${id}/`);
         setEvent(response.data);
+        setStatus(response.data.status);
       } catch (error) {
         console.error('Failed to fetch event details:', error);
-      } finally {
-        setLoading(false);
       }
     };
 
     fetchEventDetails();
   }, [id]);
 
-  if (loading) {
-    return (
-      <Container sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh' }}>
-        <CircularProgress />
-      </Container>
-    );
-  }
-
-  if (!event) {
-    return (
-      <Container>
-        <Typography variant="h5">Event not found.</Typography>
-      </Container>
-    );
-  }
-
-  const formatDateWithDay = (dateString) => {
-    const date = new Date(dateString);
-    const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
-    return date.toLocaleDateString('en-US', options);
+  const handleStatusChange = () => {
+    if (status === 'Upcoming') {
+      setStatus('In progress');
+    } else if (status === 'In progress') {
+      setStatus('Completed');
+    }
   };
 
-  const formatTime = (dateString) => {
-    const date = new Date(dateString);
-    const options = {hour: '2-digit', minute: '2-digit'};
-    return date.toLocaleTimeString('en-US', options);
+  const handleCommentSubmit = (e) => {
+    if (e.key === 'Enter' && newComment.trim()) {
+      setComments([...comments, { user: 'User', text: newComment }]);
+      setNewComment('');
+    }
+  };
+
+  if (!event) {
+    return <Typography variant="h6">Loading...</Typography>;
   }
 
   return (
-    <Box
-    maxWidth="md"
-      sx={{
-        margin: 'auto',
-        padding: 2,
-        boxShadow: 3,
-        borderRadius: 2,
-        bgcolor: 'background.paper',
-      }}
-    >
-      <Card
+    <Container sx={{ backgroundColor: '#f5f5f5', padding: 3, borderRadius: 2, ml: 20, mt: 5 }}>
+      {/* Row 1: Header */}
+      <Box sx={{ marginBottom: 2 }}>
+        <Typography variant="h4" sx={{ lineHeight: '1.2' }}>
+          {event.name}
+        </Typography>
+        <Box display="flex" justifyContent="space-between" sx={{ marginTop: 1 }}>
+          <Typography variant="subtitle1" color="primary">
+            Credit Points: {event.credit_points} | Status: {event.status}
+          </Typography>
+          <Button variant="contained" onClick={handleStatusChange}>
+            {status === 'Upcoming' ? 'Start Event' : status === 'In progress' ? 'Complete Event' : 'Event Completed'}
+          </Button>
+        </Box>
+      </Box>
+
+      {/* Row 2: Description */}
+      <Box sx={{ marginBottom: 2 }}>
+        <Typography variant="h5" gutterBottom>
+          Description
+        </Typography>
+        <div dangerouslySetInnerHTML={{ __html: event.description }} />
+      </Box>
+
+      {/* Row 3: Compact Schedule */}
+      <Box sx={{ marginBottom: 2 }}>
+        <Typography variant="h5" gutterBottom>
+          Schedule
+        </Typography>
+        <Typography variant="body2" color="text.secondary">
+          <strong>Location:</strong> {event.location} | <strong> Date/Time:</strong> {new Date(event.start_datetime).toLocaleString()} | <strong> Duration:</strong> {event.duration}
+        </Typography>
+      </Box>
+
+      {/* Row 4: Instructions */}
+      <Box sx={{ marginBottom: 2 }}>
+        <Typography variant="h5" gutterBottom>
+          Instructions to Volunteers
+        </Typography>
+        <Typography variant="body1">{event.instructions}</Typography>
+      </Box>
+
+      {/* Divider */}
+      <Box sx={{ borderTop: '1px solid #ccc', marginBottom: 2 }} />
+
+      {/* Row 6: Comments Widget */}
+      <Box
         sx={{
-          boxShadow: 5,
+          position: 'fixed',
+          bottom: 20,
+          right: 20,
+          width: 600,
+          height: 340,
+          border: '1px solid #ccc',
           borderRadius: 2,
+          padding: 1,
+          backgroundColor: '#fff',
+          boxShadow: 10,
         }}
       >
-        <CardMedia
-          component="img"
-          height="300"
-          image="https://placehold.co/600x400"
-          alt="Event Image"
+        <Typography variant="h5" gutterBottom>
+          Comments
+        </Typography>
+        <Box sx={{ height: '70%', overflowY: 'auto', padding: 1 }}>
+          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
+            {comments.map((comment, index) => (
+              <Box key={index} sx={{ display: 'flex', alignItems: 'center', padding: 1 }}>
+                <Avatar sx={{ marginRight: 1 }}>{comment.user[0]}</Avatar>
+                <Box>
+                  <Typography variant="body2" sx={{ fontWeight: 'bold' }}>{comment.user}</Typography>
+                  <Typography variant="body2">{comment.text}</Typography>
+                </Box>
+              </Box>
+            ))}
+          </Box>
+        </Box>
+        <TextField
+          label="Add a comment"
+          variant="outlined"
+          fullWidth
+          value={newComment}
+          onChange={e => setNewComment(e.target.value)}
+          onKeyDown={handleCommentSubmit} // Submit on Enter
+          sx={{ marginTop: 1 }}
         />
-        <CardContent>
-          <Box
-            sx={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: 2,
-              mb: 2,
-            }}
-          >
-            <Avatar sx={{ bgcolor: 'primary.main' }}>
-              <EventIcon />
-            </Avatar>
-            <Box>
-              <Typography variant="h6" component="div">
-                {event.name}
-              </Typography>
-              <Typography variant="body2" color="text.primary">
-                {formatDateWithDay(event.start_datetime)} from {formatTime(event.start_datetime)} - {formatTime(event.end_datetime)}
-              </Typography>
-            </Box>
-            <Button
-              variant="contained"
-              color="primary"
-              sx={{ ml: 'auto', boxShadow: 3 }}
-          >
-            Mark Attendance
-          </Button>
-          </Box>
-          <Divider sx={{ my: 2 }} />
-          <Box
-            sx={{
-              display: 'flex',
-              flexDirection: 'column',
-              gap: 2,
-            }}
-          >
-            <Box
-              sx={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: 1,
-              }}
-            >
-            <Typography variant="body2" paragraph>
-              <DescriptionIcon />
-            {event.description}
-          </Typography>
-          </Box>
-            <Box
-              sx={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: 1,
-              }}
-            >
-              <AccessTimeIcon />
-              <Typography variant="body2">{event.duration}</Typography>
-            </Box>
-            <Box
-              sx={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: 1,
-              }}
-            >
-              <PeopleIcon />
-              <Typography variant="body2">12 people responded</Typography>
-            </Box>
-            <Box
-              sx={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: 1,
-              }}
-            >
-              <Avatar
-                alt="National Service Scheme"
-                src={logo}
-                sx={{ width: 24, height: 24 }}
-              />
-              <Typography variant="body2">Event by NSS {event.college_name}</Typography>
-            </Box>
-          </Box>
-          <Divider sx={{ my: 2 }} />
-          <Typography variant="body2" paragraph>
-            <DescriptionIcon />
-            {event.instructions}
-          </Typography>
-        </CardContent>
-      </Card>
-    </Box>
+      </Box>
+
+      {/* Row 7: Event Gallery */}
+      <Box sx={{ marginBottom: 2 }}>
+        <Accordion sx={{ marginBottom: 2 }}>
+          <AccordionSummary expandIcon={<ExpandMoreIcon />}>
+            <Typography variant="h5" gutterBottom>
+              Event Gallery
+            </Typography>
+          </AccordionSummary>
+          <AccordionDetails>
+            <Grid container spacing={2}>
+              <Grid item xs={12}>
+                <ImageCarousel />
+              </Grid>
+            </Grid>
+          </AccordionDetails>
+        </Accordion>
+      </Box>
+    </Container>
   );
 };
 
-export default EventDetailPage;
+export default EventDetails;

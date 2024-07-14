@@ -85,7 +85,7 @@ const ManageVolunteers = () => {
   };
 
   const handleDelete = (volunteerId) => {
-    api.delete(`/admin/volunteers/${volunteerId}/`)
+    api.delete(`/admin/volunteer/${volunteerId}/`)
       .then(() => {
         setVolunteers(volunteers.filter(volunteer => volunteer.id !== volunteerId));
       })
