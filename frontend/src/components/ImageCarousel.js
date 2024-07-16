@@ -34,7 +34,7 @@ function Item({ item }) {
                 alt="gallery" 
                 style={{ 
                     width: '1200px', // Set a fixed width
-                    height: '400px', // Set a fixed height
+                    height: '476px', // Set a fixed height
                     objectFit: 'cover' // Adjust how the image should be resized to fit the container
                 }} 
             />

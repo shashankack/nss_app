@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
   Container, Tabs, Tab, Box, Typography, Table, TableBody, TableCell, TableContainer, TableHead,
   TableRow, Paper, Button, Dialog, DialogActions, DialogContent, DialogContentText,
@@ -13,7 +13,10 @@ import api from '../utils/api';
 import { createTheme } from "@mui/material/styles";
 import MUIRichTextEditor from 'mui-rte';
 import { stateToHTML } from 'draft-js-export-html';
-import { stateFromHTML } from 'draft-js-import-html';
+import { convertFromHTML } from 'draft-js';
+import { convertToRaw } from 'draft-js';
+import { ContentState } from 'draft-js';
+
 const fetchEvents = async (status) => {
   return await api.get(`/event?status=${status}`);
 };
@@ -69,6 +72,8 @@ const HomePage = () => {
   const [eventToDelete, setEventToDelete] = useState(null);
   const [errors, setErrors] = useState({});
   const [editErrors, setEditErrors] = useState({});
+  const [selectedEventDescription, setSelectedEventDescription] = useState(null);
+  const [selectedEventInstructions, setSelectedEventInstructions] = useState(null);
 
   const nav = useNavigate();
 
@@ -132,6 +137,10 @@ const HomePage = () => {
   };
 
   const handleEdit = (event) => {
+    event.description = getContentStateAsString(event.description);
+    event.instructions = getContentStateAsString(event.instructions);
+    setSelectedEventDescription(event.description)
+    setSelectedEventInstructions(event.instructions)
     setSelectedEvent(event);
     setEditDialog(true);
   };
@@ -251,6 +260,14 @@ const HomePage = () => {
       }
     }
   };
+  
+  const getContentStateAsString = (html) => {
+    const blocksFromHTML = convertFromHTML(html);
+    const contentState = ContentState.createFromBlockArray(blocksFromHTML.contentBlocks, blocksFromHTML.entityMap);
+    const rawContentState = convertToRaw(contentState);
+    return JSON.stringify(rawContentState);
+    };
+
 
   const handleCloseEditDialog = () => {
     setEditDialog(false);
@@ -272,7 +289,7 @@ const HomePage = () => {
   };
 
   const handleEditEditorChange = (value) => {
-    setSelectedEvent({ ...selectedEvent, description: value });
+    setSelectedEvent({ ...selectedEvent, description: stateToHTML(value.getCurrentContent()) });
   };
 
   const handleSubmit = async (event) => {
@@ -293,6 +310,7 @@ const HomePage = () => {
     }
   };
 
+ 
   const handleEditSubmit = async (event) => {
     event.preventDefault();
     const newEditErrors = validateForm(selectedEvent);
@@ -322,6 +340,7 @@ const HomePage = () => {
       </Box>
     )
   }
+
 
   return (
     <Container>
@@ -560,8 +579,8 @@ const HomePage = () => {
                 <Box style={{ border: '1px solid grey', borderRadius: 5, padding: '8px' }}>
                   <MUIRichTextEditor
                     label="Event Description"
-                    state={selectedEvent.description ? stateFromHTML(selectedEvent.description) :  null}
-                    onChange={handleEditEditorChange}
+                    defaultValue={selectedEventDescription ? selectedEventDescription :  null}
+                    onChange1={handleEditEditorChange}
                     error={!!editErrors.description}
                     helperText={editErrors.description}
                   />
@@ -575,8 +594,8 @@ const HomePage = () => {
               <Box style={{ border: '1px solid grey', borderRadius: 5, padding: '8px' }}>
                   <MUIRichTextEditor
                     label="Instructions to volunteers..."
-                    state={selectedEvent.instructions ? stateFromHTML(selectedEvent.instructions) :  null}
-                    onChange={handleEditEditorChange}
+                    defaultValue={selectedEventInstructions ? selectedEventInstructions :  null}
+                    onChange1={handleEditEditorChange}
                     error={!!editErrors.instructions}
                     helperText={editErrors.instructions}
                   />

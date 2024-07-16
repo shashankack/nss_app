@@ -1,24 +1,36 @@
 import React, { useState } from 'react';
-import { Container, Typography, TextField, Button, Box } from '@mui/material';
-import { makeStyles } from '@mui/styles';
+import { Container, Typography, TextField, Button, Box, Link } from '@mui/material';
+import { makeStyles, styled } from '@mui/styles';
 import axios from 'axios';
 import { setAccessToken, setRefreshToken } from '../utils/auth';
 import { useNavigate } from 'react-router-dom';
-import logo from "../assets/nss_logo.png"
+import logo from "../assets/nss_logo.png";
+import background from "../assets/login_bg.jpg";
 
 const useStyles = makeStyles(() => ({
   root: {
     display: 'flex',
-    margin: 'auto',
-    marginTop: '64px',
-    borderRadius: '20px',
-    width: '900px',
-    height: '600px',
-    padding: '5px',
-    boxShadow: '4px 15px 150px rgba(0, 0, 0, 0.5)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    minHeight: '100vh',
+    backgroundImage: `url(${background})`,
+    backgroundSize: 'cover',
+    backgroundPosition: 'center',
+  },
+  blurContainer: {
+    display: 'flex',
+    flexDirection: 'row',
+    justifyContent: 'center',
+    height: '35em',
+    alignItems: 'center',
+    backgroundColor: 'rgba(0, 0, 0, 0.1)',
+    backdropFilter: 'blur(10px)',
+    borderRadius: '10px',
+    padding: '40px',
+    boxShadow: '0px 4px 15px rgba(0, 0, 0, 0.2)',
   },
   formContainer: {
-    marginTop: '60px',
+    marginLeft: '20px',
     maxWidth: 'xs',
   },
   form: {
@@ -28,11 +40,57 @@ const useStyles = makeStyles(() => ({
     marginTop: '16px',
     width: '200px',
   },
-  image: {
-    width: '100%',
-    height: '100%',
-    objectFit: 'cover',
-    borderRadius: '4px 0 0 4px',
+  logo: {
+    maxWidth: '300px',
+  },
+  textField: {
+    '& .MuiOutlinedInput-root': {
+      backgroundColor: 'transparent', // Set background to transparent
+      '& fieldset': {
+        borderColor: 'rgba(255, 255, 255, 0.7)',
+      },
+      '&:hover fieldset': {
+        borderColor: '#fff',
+      },
+      '&.Mui-focused fieldset': {
+        borderColor: '#fff',
+      },
+      '& input': {
+        color: '#fff',
+        backgroundColor: 'transparent', // Ensure input background is transparent
+      },
+    },
+    '& .MuiInputLabel-root': {
+      color: 'rgba(103, 156, 217, 0.7)',
+    },
+    '& .MuiInputLabel-root.Mui-focused': {
+      color: '#fff',
+    },
+  },
+  errorMessage: {
+    color: 'red',
+    marginTop: '8px',
+    animation: '$wobble 0.5s ease-in-out', // Apply the animation
+  },
+  '@keyframes wobble': {
+    '0%': {
+      transform: 'translateX(0)',
+    },
+    '15%': {
+      transform: 'translateX(-10px) rotate(-5deg)',
+    },
+    '30%': {
+      transform: 'translateX(10px) rotate(5deg)',
+    },
+    '50%': {
+      transform: 'translateX(-10px) rotate(-5deg)',
+    },
+    '70%': {
+      transform: 'translateX(10px) rotate(5deg)',
+    },
+    '100%': {
+      transform: 'translateX(0)',
+    },
   },
 }));
 
@@ -60,18 +118,16 @@ const Login = () => {
         navigate('/');
       })
       .catch(() => {
-        setError('Invalid login credentials');
+        setError('Invalid email or password');
       });
   };
 
   return (
-    <Box className={classes.root} sx={{mt:16}}>
-      <Box sx={{ flex: 1, mt:15, ml:6, mr:-10 }}>
-        <img src={logo} alt="Login" width={350}/>
-      </Box>
-      <Box sx={{ flex: 1, display: 'flex', justifyContent: 'center', alignItems: 'center', mt:-4, mr:4 }}>
+    <Box className={classes.root}>
+      <Box className={classes.blurContainer}>
+        <img src={logo} alt="Logo" className={classes.logo} />
         <Container className={classes.formContainer}>
-          <Typography component="h1" variant="h4">
+          <Typography component="h1" variant="h3" sx={{ textColor: 'white', fontWeight: 'bold' }}>
             Sign in
           </Typography>
           <form className={classes.form} onSubmit={handleSubmit}>
@@ -83,9 +139,10 @@ const Login = () => {
               id="email"
               label="Email Address"
               name="email"
-              autoComplete="email"
+              autoComplete="off"
               autoFocus
               onChange={handleEmailChange}
+              className={classes.textField}
             />
             <TextField
               variant="outlined"
@@ -98,10 +155,25 @@ const Login = () => {
               id="password"
               autoComplete="current-password"
               onChange={handlePasswordChange}
+              className={classes.textField}
             />
-            {error && <Typography color="error">{error}</Typography>}
-            <Box display="flex" justifyContent="center" sx={{mt:1}}>
-              <Button 
+            {error && <Typography className={classes.errorMessage}>{error}</Typography>}
+            <Box display="flex" justifyContent="space-between" alignItems="center" sx={{ mt: 1 }}>
+              <Link
+                href="/forgot-password"
+                variant="body2"
+                sx={{
+                  transition: 'all 0.3s ease',
+                  color: 'rgba(255, 255, 255, 0.7)',
+                  '&:hover': {
+                    color: 'rgba(25, 118, 210, 0.7)',
+                    textShadow: '0 0 10px rgba(25, 118, 210, 0.8)',
+                  },
+                }}
+              >
+                Forgot Password?
+              </Link>
+              <Button
                 sx={{
                   transition: 'all 0.3s ease',
                   '&:hover': {

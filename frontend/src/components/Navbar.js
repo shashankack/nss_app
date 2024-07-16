@@ -12,58 +12,34 @@ import { useLocation, useNavigate } from 'react-router-dom';
 import api from '../utils/api';
 import { clearTokens } from '../utils/auth';
 import Badge from '@mui/material/Badge';
-import logo from '../assets/nss_logo.png'; // Ensure this is a high-resolution image
-import CreditIcon from '../assets/credits_earned_dark.png'
+import logo from '../assets/nss_logo.png';
 import AutoAwesomeIcon from '@mui/icons-material/AutoAwesome';
+
 function ResponsiveAppBar() {
   const location = useLocation();
   const isNotLoginPage = location.pathname !== '/login';
   const nav = useNavigate();
   
-  const [anchorElNav, setAnchorElNav] = React.useState(null);
   const [anchorElUser, setAnchorElUser] = React.useState(null);
-  const [firstName, setFirstName] = React.useState('');
   const [userProfile, setUserProfile] = React.useState({});
-
-  const getInitials = (firstName, lastName) => {
-    if (firstName && lastName) {
-      return `${firstName.substring(0, 1).toUpperCase()}${lastName.substring(0, 1).toUpperCase()}`;
-    }
-    return '';
-  };
 
   React.useEffect(() => {
     if (isNotLoginPage) {
       api.get('/loggedinuser/')
-      .then(response => {
-        setUserProfile(response.data);
-        console.log(userProfile);
-      })
-      .catch(error => {
-        console.error();
-      });
+        .then(response => {
+          setUserProfile(response.data);
+        })
+        .catch(error => {
+          console.error(error);
+        });
     }
   }, [isNotLoginPage]);
 
-  const handleOpenNavMenu = (event) => {
-    console.log(userProfile);
-    setAnchorElNav(event.currentTarget);
-  };
-  
   const handleOpenUserMenu = (event) => {
     setAnchorElUser(event.currentTarget);
   };
 
-  const goHome = () => {
-    nav("/");
-  };
-
-  const handleProfileView = () => {
-    nav("/profile");
-  };
-
   const handleLogout = () => {
-    handleCloseUserMenu();
     clearTokens();
     nav("/login");
   };
@@ -73,104 +49,62 @@ function ResponsiveAppBar() {
   };
 
   return (
-    isNotLoginPage && 
-    <AppBar position="sticky" sx={{ height: 70 }}>
-      <Toolbar>
-        <Box display="flex" alignItems="center">
-          <IconButton
-            edge="end"
-            aria-haspopup="true"
-            color="inherit"
-            onClick={goHome}
-            sx={{
-              '&:hover': {
-                backgroundColor: 'Transparent', // disable hover effect
-              },
-            }}
-          >
-            <Avatar
-              src={logo}
-              alt="NSS"
-              variant="square"
-              sx={{ width: 65, height: 65, mt:.3, mr:5 }} // Adjust the size as needed
-            />
-          </IconButton>
-          <Typography
-            fontFamily='custom-font'
-            fontSize = '1.5rem'
-            variant="h6"
-            noWrap
-            component="div"
-            sx={{ display: { xs: 'none', sm: 'block' }, ml: 10, mt:.5 }}
-          >
-            {userProfile.college}
-          </Typography>
-          <Typography
-            fontFamily='custom-font'
-            fontSize='1.5rem'
-            variant="h6"
-            noWrap
-            component="div"
-            sx={{ display: { xs: 'none', sm: 'block' }, ml: 25, mt:.5 }}
-          >
-            Volunteering Year: {userProfile.volunteering_year}
-          </Typography>
-        </Box>
-        <Box sx={{ flexGrow: 1 }} >
-        <Typography
-        fontFamily='custom-font'
-        fontSize='1.5rem'
-        variant="h6"
-        noWrap
-        component="div"
-        sx={{ display: { xs: 'none', sm: 'block' }, ml: 30, mt:.5 }}
-      >
-        Role: {userProfile.role}
-      </Typography>
-        </Box>
-        {userProfile.credits_earned && <Box sx={{ display: { xs: 'none', md: 'flex' }, mr:2, mt:.5 }}>
-          <Tooltip title="Credit Points">
-            <IconButton
-              size="large"
-              color="inherit">
-              <Badge badgeContent={userProfile.credits_earned} color="error">
-                <AutoAwesomeIcon style={{ fontSize: '40', marginRight: '8' }} />
-              </Badge>
+    isNotLoginPage && (
+      <AppBar position="sticky" sx={{ height: 70 }}>
+        <Toolbar sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <Box display="flex" alignItems="center">
+            <IconButton edge="start" color="inherit" onClick={() => nav("/")}>
+              <Avatar src={logo} alt="NSS" variant="square" sx={{ width: 65, height: 65 }} />
             </IconButton>
-          </Tooltip>
-        </Box>}
-        <Box sx={{ flexGrow: 0 }}>
-          <Tooltip title="Open Settings">
-            <IconButton onClick={handleOpenUserMenu} sx={{ p: 0 }}>
-              <Avatar alt={userProfile.first_name + " " + userProfile.last_name} src="/static/images/avatar/2.jpg">{getInitials(userProfile.first_name, userProfile.last_name)}</Avatar> 
-            </IconButton>
-          </Tooltip>
-          <Menu
-            sx={{ mt: '45px' }}
-            id="menu-appbar"
-            anchorEl={anchorElUser}
-            anchorOrigin={{
-              vertical: 'top',
-              horizontal: 'right',
-            }}
-            keepMounted
-            transformOrigin={{
-              vertical: 'top',
-              horizontal: 'right',
-            }}
-            open={Boolean(anchorElUser)}
-            onClose={handleCloseUserMenu}
-          >
-            <MenuItem key="profile" onClick={handleProfileView}>
-              <Typography textAlign="center">My Profile</Typography>
-            </MenuItem>
-            <MenuItem key="logout" onClick={handleLogout}>
-              <Typography textAlign="center">Logout</Typography>
-            </MenuItem>
-          </Menu>
-        </Box>
-      </Toolbar>
-    </AppBar>
+            <Typography fontFamily='custom-font' variant="h6" noWrap sx={{ ml: 2 }}>
+              {userProfile.college}
+            </Typography>
+          </Box>
+
+          <Box display="flex" alignItems="center">
+            <Typography fontFamily='custom-font' variant="h6" noWrap sx={{ mx: 2 }}>
+              Volunteering Year: {userProfile.volunteering_year}
+            </Typography>
+            <Typography fontFamily='custom-font' variant="h6" noWrap sx={{ mx: 2 }}>
+              Role: {userProfile.role}
+            </Typography>
+          </Box>
+
+          <Box display="flex" alignItems="center">
+            {userProfile.credits_earned && (
+              <Tooltip title="Credit Points">
+                <IconButton color="inherit" sx={{ mr: 2 }}>
+                  <Badge badgeContent={userProfile.credits_earned} color="error">
+                    <AutoAwesomeIcon style={{ fontSize: 40 }} />
+                  </Badge>
+                </IconButton>
+              </Tooltip>
+            )}
+            <Tooltip title="Open Settings">
+              <IconButton onClick={handleOpenUserMenu} sx={{ p: 0 }}>
+                <Avatar alt={`${userProfile.first_name} ${userProfile.last_name}`} src="/static/images/avatar/2.jpg">
+                  {userProfile.first_name ? userProfile.first_name.charAt(0).toUpperCase() : ''}
+                  {userProfile.last_name ? userProfile.last_name.charAt(0).toUpperCase() : ''}
+                </Avatar>
+              </IconButton>
+            </Tooltip>
+            <Menu
+              anchorEl={anchorElUser}
+              open={Boolean(anchorElUser)}
+              onClose={handleCloseUserMenu}
+              sx={{ mt: '45px' }}
+            >
+              <MenuItem onClick={() => nav("/profile")}>
+                <Typography textAlign="center">My Profile</Typography>
+              </MenuItem>
+              <MenuItem onClick={handleLogout}>
+                <Typography textAlign="center">Logout</Typography>
+              </MenuItem>
+            </Menu>
+          </Box>
+        </Toolbar>
+      </AppBar>
+    )
   );
 }
 

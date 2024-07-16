@@ -2,10 +2,9 @@ from rest_framework.response import Response
 from rest_framework import status
 from rest_framework.views import APIView
 from rest_framework.permissions import IsAuthenticated
-from .serializers import EventSerializer, AttendanceSerializer, CollegeVolunteersSerializer
-from .models import Events, Attendance
-from nss_profile.models import Volunteer    
-from nss_profile.models import NSSYear
+from .serializers import EventSerializer, AttendanceSerializer, CollegeVolunteersSerializer, EventCommentsSerializer
+from .models import Events, Attendance, EventComments
+from nss_profile.models import Volunteer, NSSYear, CollegeAdmin
 
 class EventAPIView(APIView):
     permission_classes = [IsAuthenticated]
@@ -117,3 +116,36 @@ class EventAttendedVolunteersAPIView(APIView):
         
         serializer = CollegeVolunteersSerializer(Volunteer.objects.filter(id__in=volunteers), many=True)
         return Response(serializer.data, status=status.HTTP_200_OK)
+    
+class EventCommentsAPIView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get_admins_college(self, user_id):
+        try:
+            return CollegeAdmin.objects.get(user_id=user_id).college
+        except CollegeAdmin.DoesNotExist:
+            return None
+        
+    def get(self, request, event_id):
+        event = Events.objects.filter(id=event_id).first()
+        comments = EventComments.objects.filter(event=event)
+        serializer = EventCommentsSerializer(comments, many=True)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+    
+    def post(self, request, event_id):
+        event = Events.objects.filter(id=event_id).first()
+        data = request.data
+        data['user'] = request.user.id
+        data['event'] = event_id
+        serializer = EventCommentsSerializer(data=data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    
+    def delete(self, request, comment_id):
+        comment = EventComments.objects.filter(id=comment_id).first()
+        comment.is_hidden = True
+        comment.save()
+
+        return Response('Comment has been deleted', status=status.HTTP_204_NO_CONTENT)
