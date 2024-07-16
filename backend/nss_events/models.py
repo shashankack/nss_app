@@ -7,11 +7,13 @@ from nss_profile.models import Volunteer, College, User
 
 class Events(models.Model):
     STATUS_OPEN = 'Open'
+    STATUS_ONGOING = 'In Progress'
     STATUS_DELETED = 'Deleted'
     STATUS_COMPLETED = "Completed"
 
     STATUS_CHOICES = (
         (STATUS_OPEN, STATUS_OPEN),
+        (STATUS_ONGOING, STATUS_ONGOING),
         (STATUS_DELETED, STATUS_DELETED),
         (STATUS_COMPLETED, STATUS_COMPLETED)
     )

@@ -1,6 +1,17 @@
 import React, { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
-import { Container, Typography, Button, Box, Avatar, TextField, Divider, Paper } from '@mui/material';
+import {
+  Container,
+  Typography,
+  Button,
+  Box,
+  Avatar,
+  TextField,
+  Paper,
+  Modal,
+  Checkbox,
+  FormControlLabel,
+} from '@mui/material';
 import api from '../utils/api';
 import ImageCarousel from '../components/ImageCarousel';
 import { format } from 'date-fns';
@@ -12,6 +23,28 @@ const EventDetails = () => {
   const [comments, setComments] = useState([]);
   const [newComment, setNewComment] = useState('');
   const [attendedVolunteers, setAttendedVolunteers] = useState([]);
+  const [volunteers, setVolunteers] = useState([]);
+  const [open, setOpen] = useState(false);
+  const [selectedVolunteers, setSelectedVolunteers] = useState([]);
+  const [search, setSearch] = useState('');
+
+  const fetchAttendedVolunteers = async () => {
+    try {
+      const response = await api.get(`/event/${id}/attended-volunteers/`);
+      setAttendedVolunteers(response.data);
+    } catch (error) {
+      console.error("Failed to fetch attended volunteers:", error);
+    }
+  };
+
+  const fetchVolunteers = async () => {
+    try {
+      const response = await api.get(`/volunteers/?event_id=${id}`);
+      setVolunteers(response.data);
+    } catch (error) {
+      console.error("Failed to fetch volunteers:", error);
+    }
+  };
 
   useEffect(() => {
     const fetchEventDetails = async () => {
@@ -33,30 +66,22 @@ const EventDetails = () => {
       }
     };
 
-    const fetchAttendedVolunteers = async () => {
-      try {
-        const response = await api.get(`/event/${id}/attended-volunteers/`);
-        setAttendedVolunteers(response.data);
-      } catch (error) {
-        console.error("Failed to fetch attended volunteers:", error);
-      }
-    };
-
     fetchEventDetails();
     fetchComments();
     fetchAttendedVolunteers();
+    fetchVolunteers();
   }, [id]);
 
   const handleStatusChange = async () => {
     try {
       let newStatus;
-      if (status === 'Upcoming') {
-        newStatus = 'In progress';
-      } else if (status === 'In progress') {
+      if (status === 'Open') {
+        newStatus = 'In Progress';
+      } else if (status === 'In Progress') {
         newStatus = 'Completed';
       }
 
-      const response = await api.patch(`/event/${id}/`, { status: newStatus });
+      const response = await api.put(`/event/${id}/`, { status: newStatus });
       setStatus(response.data.status);
     } catch (error) {
       console.error('Failed to update status:', error);
@@ -74,6 +99,36 @@ const EventDetails = () => {
       }
     }
   };
+
+  const handleOpen = () => setOpen(true);
+  const handleClose = () => setOpen(false);
+
+  const handleVolunteerSelect = (volunteerId) => {
+    setSelectedVolunteers((prevSelected) =>
+      prevSelected.includes(volunteerId)
+        ? prevSelected.filter((id) => id !== volunteerId)
+        : [...prevSelected, volunteerId]
+    );
+  };
+
+  const handleSubmitAttendance = async () => {
+    try {
+      await api.post(`/event/${id}/mark-attendance/`, { volunteer_ids: selectedVolunteers });
+      setOpen(false);
+      setSelectedVolunteers([]);
+      fetchAttendedVolunteers();
+      fetchVolunteers();
+    } catch (error) {
+      console.error('Failed to mark attendance:', error);
+    }
+  };
+
+  const attendedVolunteerIds = new Set(attendedVolunteers.map(v => v.id));
+  const filteredVolunteers = volunteers.filter((volunteer) =>
+    (volunteer.first_name.toLowerCase().includes(search.toLowerCase()) ||
+     volunteer.last_name.toLowerCase().includes(search.toLowerCase())) &&
+    !attendedVolunteerIds.has(volunteer.id) // Exclude attended volunteers
+  );
 
   const groupCommentsByDate = (comments) => {
     return comments.reduce((groups, comment) => {
@@ -93,7 +148,9 @@ const EventDetails = () => {
   }
 
   return (
-    <Container sx={{ backgroundColor: '#f5f5f5', padding: 3, borderRadius: 2, ml: 10, mt: 5, boxShadow: 10 }}>
+    <Container
+      style={{ maxWidth: '1390px' }}
+      sx={{ backgroundColor: '#f5f5f5', padding: 3, borderRadius: 2, ml: 5, mt: 5, boxShadow: 10 }}>
       {/* Row 1: Header */}
       <Box sx={{ marginBottom: 2 }}>
         <Typography variant="h4" sx={{ lineHeight: '1.2' }}>
@@ -103,8 +160,12 @@ const EventDetails = () => {
           <Typography variant="subtitle1" color="primary">
             Credit Points: {event.credit_points} | Status: {status}
           </Typography>
-          <Button variant="contained" onClick={handleStatusChange}>
-            {status === 'Upcoming' ? 'Start Event' : status === 'In progress' ? 'Complete Event' : 'Event Completed'}
+          <Button
+            variant="contained"
+            onClick={handleStatusChange}
+            disabled={status === 'Completed'}
+          >
+            {status === 'Open' ? 'Start Event' : status === 'In Progress' ? 'End Event' : 'Event Ended'}
           </Button>
         </Box>
       </Box>
@@ -153,8 +214,8 @@ const EventDetails = () => {
           boxShadow: 10,
         }}
       >
-        <Typography variant="h5" gutterBottom>
-          Event Forum
+        <Typography variant="h6" gutterBottom>
+          Event Discussion Forum
         </Typography>
         <Box sx={{ height: '70%', overflowY: 'auto', padding: 1 }}>
           {Object.keys(groupedComments).map(date => (
@@ -163,7 +224,7 @@ const EventDetails = () => {
               {groupedComments[date].map(comment => (
                 <Paper elevation={2} key={comment.id} sx={{ padding: 2, marginBottom: 2 }}>
                   <Box sx={{ display: 'flex', alignItems: 'center', marginBottom: 1 }}>
-                    <Avatar sx={{ marginRight: 2 }}>{comment.first_name[0]}</Avatar>
+                    <Avatar sx={{ marginRight: 2, bgcolor: 'primary.main' }}>{comment.first_name[0]}</Avatar>
                     <Typography variant="body2" sx={{ fontWeight: 'bold' }}>
                       {comment.first_name} {comment.last_name}
                     </Typography>
@@ -178,6 +239,7 @@ const EventDetails = () => {
           ))}
         </Box>
         <TextField
+          autoComplete="off"
           label="Add a comment"
           variant="outlined"
           value={newComment}
@@ -192,58 +254,109 @@ const EventDetails = () => {
 
       {/* Row 7: Attended Volunteers */}
       <Box
-  sx={{
-    position: 'fixed',
-    bottom: 400,
-    right: 35,
-    width: 450,
-    height: 475,
-    border: '1px solid #ccc',
-    borderRadius: 2,
-    padding: 1,
-    backgroundColor: '#fff',
-    boxShadow: 10,
-  }}
->
-  <Typography variant="h5" gutterBottom>
-    Attended Volunteers
-  </Typography>
-  <Box sx={{ height: '70%', overflowY: 'auto', padding: 1 }}>
-    {attendedVolunteers.length === 0 ? (
-      <Typography>No volunteers attended.</Typography>
-    ) : (
-      attendedVolunteers.map((volunteer) => (
-        <Paper
-          key={volunteer.id}
-          sx={{
-            display: 'flex',
-            alignItems: 'center',
-            padding: 1,
-            marginBottom: 1,
-            borderRadius: 1,
-            boxShadow: 1,
-            transition: '0.3s',
-            '&:hover': {
-              boxShadow: 3,
-            },
-          }}
-        >
-          <Avatar sx={{ marginRight: 2, bgcolor: 'primary.main' }}>
-            {volunteer.first_name[0]}
-          </Avatar>
-          <Box>
-            <Typography variant="body1" sx={{ fontWeight: 'bold' }}>
-              {volunteer.first_name} {volunteer.last_name}
-            </Typography>
-            <Typography variant="body2" color="text.secondary">
-              Role: {volunteer.role}
-            </Typography>
+        sx={{
+          position: 'fixed',
+          bottom: 400,
+          right: 35,
+          width: 450,
+          height: 475,
+          border: '1px solid #ccc',
+          borderRadius: 2,
+          padding: 1,
+          backgroundColor: '#fff',
+          boxShadow: 10,
+        }}
+      >
+        <Typography variant="h5" gutterBottom>
+          Attended Volunteers
+        </Typography>
+        <Box sx={{ height: '70%', overflowY: 'auto', padding: 5 }}>
+          {attendedVolunteers.length === 0 ? (
+            <Typography>No volunteers attended.</Typography>
+          ) : (
+            attendedVolunteers.map((volunteer) => (
+              <Paper
+                key={volunteer.id}
+                sx={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  padding: 1,
+                  marginBottom: 2,
+                  borderRadius: 1,
+                  boxShadow: 3,
+                  transition: '0.5s',
+                  '&:hover': {
+                    boxShadow: 5,
+                  },
+                }}
+              >
+                <Avatar sx={{ marginRight: 2, bgcolor: 'primary.main' }}>
+                  {volunteer.first_name[0]}
+                </Avatar>
+                <Box>
+                  <Typography variant="body1" sx={{ fontWeight: 'bold' }}>
+                    {volunteer.first_name} {volunteer.last_name}
+                  </Typography>
+                  <Typography variant="body2" color="text.secondary">
+                    Role: {volunteer.role}
+                  </Typography>
+                </Box>
+              </Paper>
+            ))
+          )}
+        </Box>
+        <Box sx={{ ml: 65, mt: 12 }}>
+          <Button  
+            variant="contained" 
+            onClick={handleOpen}
+            disabled={status !== 'In Progress'}>Mark Attendance</Button>
+        </Box>
+      </Box>
+
+      {/* Attendance Modal */}
+      <Modal open={open} onClose={handleClose}>
+        <Box sx={{ 
+          bgcolor: 'background.paper', 
+          boxShadow: 24, 
+          p: 4, 
+          borderRadius: 2, 
+          width: 400,
+          position: 'absolute',
+          top: '50%',
+          left: '50%',
+          transform: 'translate(-50%, -50%)'
+        }}>
+          <Typography variant="h6" gutterBottom>
+            Mark Attendance
+          </Typography>
+          <TextField
+            label="Search Volunteers"
+            variant="outlined"
+            fullWidth
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            sx={{ marginBottom: 2 }}
+          />
+          <Box sx={{ maxHeight: 300, overflowY: 'auto' }}>
+            {filteredVolunteers.map((volunteer) => (
+              <FormControlLabel
+                key={volunteer.id}
+                control={
+                  <Checkbox
+                    checked={selectedVolunteers.includes(volunteer.id)}
+                    onChange={() => handleVolunteerSelect(volunteer.id)}
+                  />
+                }
+                label={`${volunteer.first_name} ${volunteer.last_name} (${volunteer.role})`}
+              />
+            ))}
           </Box>
-        </Paper>
-      ))
-    )}
-  </Box>
-</Box>
+          <Box sx={{ display: 'flex', justifyContent: 'flex-end', marginTop: 2 }}>
+            <Button onClick={handleClose} sx={{ marginRight: 1 }}>Cancel</Button>
+            <Button variant="contained" onClick={handleSubmitAttendance}>Submit</Button>
+          </Box>
+        </Box>
+      </Modal>
     </Container>
   );
 };

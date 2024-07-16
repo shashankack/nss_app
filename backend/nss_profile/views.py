@@ -30,16 +30,21 @@ class LoggedInUserAPIView(APIView):
             values['credits_earned'] = sum(list(credits))
         return Response(values, status=status.HTTP_200_OK)
     
-class VolunteerAPIView(APIView): #Volunteers, Leaders
+class VolunteerAPIView(APIView):
     permission_classes = [IsAuthenticated]
+
     def get_college(self, user_id, volunteering_year):
         return Volunteer.objects.get(user_id=user_id, volunteering_year=volunteering_year)
-    
+
     def get(self, request):
-        college = self.get_college(request.user.id)
-        volunteers = Volunteer.objects.filter(course_college=college)
+        event_id = request.GET.get('event_id')
+        volunteering_year = NSSYear.current_year()
+        college = self.get_college(request.user.id, volunteering_year)
+        attended_volunteers = Attendance.objects.filter(event_id=event_id).values_list('volunteer_id', flat=True)
+        volunteers = Volunteer.objects.filter(course__college=college.id).exclude(id__in=attended_volunteers)
         serializer = VolunteerSerializer(volunteers, many=True)
         return Response(serializer.data, status=status.HTTP_200_OK)
+
 
 
 class ManageVolunteerAPIView(APIView): #College Admin

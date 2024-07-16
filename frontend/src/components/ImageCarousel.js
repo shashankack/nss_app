@@ -33,7 +33,7 @@ function Item({ item }) {
                 src={item.imgSrc} 
                 alt="gallery" 
                 style={{ 
-                    width: '1200px', // Set a fixed width
+                    width: '1390px', // Set a fixed width
                     height: '476px', // Set a fixed height
                     objectFit: 'cover' // Adjust how the image should be resized to fit the container
                 }} 
