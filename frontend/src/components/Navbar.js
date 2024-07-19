@@ -54,26 +54,24 @@ function ResponsiveAppBar() {
         <Toolbar sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
           <Box display="flex" alignItems="center">
             <IconButton edge="start" color="inherit" onClick={() => nav("/")}>
-              <Avatar src={logo} alt="NSS" variant="square" sx={{ width: 65, height: 65 }} />
+              <Avatar src={logo} alt="NSS" variant="square" sx={{ width: 60, height: 60 }} />
             </IconButton>
-            <Typography fontFamily='custom-font' variant="h6" noWrap sx={{ ml: 2 }}>
+            <Typography fontFamily='custom-font' variant="h5" noWrap sx={{ ml: 2 }}>
               {userProfile.college}
             </Typography>
           </Box>
 
-          <Box display="flex" alignItems="center">
-            <Typography fontFamily='custom-font' variant="h6" noWrap sx={{ mx: 2 }}>
-              Volunteering Year: {userProfile.volunteering_year}
-            </Typography>
-            <Typography fontFamily='custom-font' variant="h6" noWrap sx={{ mx: 2 }}>
-              Role: {userProfile.role}
-            </Typography>
-          </Box>
+          <Typography fontFamily='custom-font' variant="h5" noWrap marginRight="40px">
+            Volunteering Year: {userProfile.volunteering_year}
+          </Typography>
 
           <Box display="flex" alignItems="center">
+            <Typography fontFamily='custom-font' variant="h5" noWrap sx={{ mr: 2 }}>
+              Role: {userProfile.role}
+            </Typography>
             {userProfile.credits_earned && (
               <Tooltip title="Credit Points">
-                <IconButton color="inherit" sx={{ mr: 2 }}>
+                <IconButton color="inherit" sx={{ mr: 2, ml: 20 }}>
                   <Badge badgeContent={userProfile.credits_earned} color="error">
                     <AutoAwesomeIcon style={{ fontSize: 40 }} />
                   </Badge>
@@ -92,7 +90,7 @@ function ResponsiveAppBar() {
               anchorEl={anchorElUser}
               open={Boolean(anchorElUser)}
               onClose={handleCloseUserMenu}
-              sx={{ mt: '45px' }}
+              sx={{ mt: 2 }}
             >
               <MenuItem onClick={() => nav("/profile")}>
                 <Typography textAlign="center">My Profile</Typography>

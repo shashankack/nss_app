@@ -164,6 +164,7 @@ const EventDetails = () => {
             variant="contained"
             onClick={handleStatusChange}
             disabled={status === 'Completed'}
+            hidden={volunteers.role != 'Leader'}
           >
             {status === 'Open' ? 'Start Event' : status === 'In Progress' ? 'End Event' : 'Event Ended'}
           </Button>
@@ -309,6 +310,7 @@ const EventDetails = () => {
           <Button  
             variant="contained" 
             onClick={handleOpen}
+            hidden={volunteers.role != 'Leader'}
             disabled={status !== 'In Progress'}>Mark Attendance</Button>
         </Box>
       </Box>

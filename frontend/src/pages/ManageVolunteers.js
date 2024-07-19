@@ -8,8 +8,10 @@ import { useNavigate } from 'react-router-dom';
 
 const ManageVolunteers = () => {
   const [volunteers, setVolunteers] = useState([]);
+  const [filteredVolunteers, setFilteredVolunteers] = useState([]);
   const [open, setOpen] = useState(false);
   const [courses, setCourses] = useState([]);
+  const [searchQuery, setSearchQuery] = useState('');
   const nav = useNavigate();
   const [newVolunteer, setNewVolunteer] = useState({
     user: {
@@ -30,18 +32,31 @@ const ManageVolunteers = () => {
     api.get('/admin/volunteers/')
       .then((response) => {
         setVolunteers(response.data);
+        setFilteredVolunteers(response.data);
       })
       .catch(() => {
-        
+        // Handle error
       });
     api.get('admin/college-courses/')
       .then((response) => {
         setCourses(response.data);
       })
       .catch(() => {
-        
+        // Handle error
       });
   }, []);
+
+  useEffect(() => {
+    if (searchQuery) {
+      const filtered = volunteers.filter(volunteer =>
+        volunteer.first_name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        volunteer.last_name.toLowerCase().includes(searchQuery.toLowerCase())
+      );
+      setFilteredVolunteers(filtered);
+    } else {
+      setFilteredVolunteers(volunteers);
+    }
+  }, [searchQuery, volunteers]);
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
@@ -77,10 +92,11 @@ const ManageVolunteers = () => {
     api.post('/admin/volunteers/', newVolunteer)
       .then((response) => {
         setVolunteers([...volunteers, response.data]);
+        setFilteredVolunteers([...filteredVolunteers, response.data]);
         setOpen(false);
       })
       .catch((error) => {
-        
+        // Handle error
       });
   };
 
@@ -88,16 +104,24 @@ const ManageVolunteers = () => {
     api.delete(`/admin/volunteer/${volunteerId}/`)
       .then(() => {
         setVolunteers(volunteers.filter(volunteer => volunteer.id !== volunteerId));
+        setFilteredVolunteers(filteredVolunteers.filter(volunteer => volunteer.id !== volunteerId));
       })
       .catch((error) => {
-        
+        // Handle error
       });
   };
 
   return (
     <Container>
       <Box style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '10em' }}>
-        <h1>Volunteer Management</h1>
+      <h1>Volunteer Management</h1>
+        <TextField
+          label="Search by First Name or Last Name"
+          variant="outlined"
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
+          style={{ width: 450 }}
+        />
         <Button variant="contained" color="primary" onClick={handleOpen}>
           Create Volunteer
         </Button>
@@ -111,15 +135,15 @@ const ManageVolunteers = () => {
         }}>
         <Table stickyHeader>
           <TableHead sx={{ '& th': { backgroundColor: 'primary.main', color: 'white' } }}>
-            <TableRow>
-              <TableCell>First Name</TableCell>
-              <TableCell>Last Name</TableCell>
-              <TableCell>Role</TableCell>
+            <TableRow sx={{ backgroundColor: '#B0BEC5', color: '#212121' }}>
+              <TableCell sx={{ padding: '16px', fontWeight: 'bold' }} >First Name</TableCell>
+              <TableCell sx={{ padding: '16px', fontWeight: 'bold' }} >Last Name</TableCell>
+              <TableCell sx={{ padding: '16px', fontWeight: 'bold' }} >Role</TableCell>
               <TableCell style={{ width: '100px' }}>Actions</TableCell>
             </TableRow>
           </TableHead>
           <TableBody>
-            {volunteers.map((volunteer) => (
+            {filteredVolunteers.map((volunteer) => (
               <TableRow 
                 key={volunteer.id}
                 style={{ cursor: 'pointer' }}

@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
-import { Container, Typography, TextField, Button, Box, Link } from '@mui/material';
-import { makeStyles, styled } from '@mui/styles';
+import { Container, Typography, TextField, Button, Box, Link, Snackbar } from '@mui/material';
+import MuiAlert from '@mui/material/Alert';
+import { makeStyles } from '@mui/styles';
 import axios from 'axios';
 import { setAccessToken, setRefreshToken } from '../utils/auth';
 import { useNavigate } from 'react-router-dom';
@@ -61,7 +62,7 @@ const useStyles = makeStyles(() => ({
       },
     },
     '& .MuiInputLabel-root': {
-      color: 'rgba(103, 156, 217, 0.7)',
+      color: '#fff',
     },
     '& .MuiInputLabel-root.Mui-focused': {
       color: '#fff',
@@ -100,6 +101,15 @@ const Login = () => {
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const navigate = useNavigate();
+  const [mouseX, setMouseX] = useState(0);
+  const [mouseY, setMouseY] = useState(0);
+  const [snackbarOpen, setSnackbarOpen] = useState(false);
+
+  const handleMouseMove = (event) => {
+    const rect = event.currentTarget.getBoundingClientRect();
+    setMouseX(event.clientX - rect.left);
+    setMouseY(event.clientY - rect.top);
+  };
 
   const handleEmailChange = (e) => {
     setEmail(e.target.value);
@@ -120,6 +130,17 @@ const Login = () => {
       .catch(() => {
         setError('Invalid email or password');
       });
+  };
+
+  const handleSnackbarOpen = () => {
+    setSnackbarOpen(true);
+  };
+
+  const handleSnackbarClose = (event, reason) => {
+    if (reason === 'clickaway') {
+      return;
+    }
+    setSnackbarOpen(false);
   };
 
   return (
@@ -160,7 +181,7 @@ const Login = () => {
             {error && <Typography className={classes.errorMessage}>{error}</Typography>}
             <Box display="flex" justifyContent="space-between" alignItems="center" sx={{ mt: 1 }}>
               <Link
-                href="/forgot-password"
+                href="#"
                 variant="body2"
                 sx={{
                   transition: 'all 0.3s ease',
@@ -170,18 +191,26 @@ const Login = () => {
                     textShadow: '0 0 10px rgba(25, 118, 210, 0.8)',
                   },
                 }}
+                onClick={handleSnackbarOpen}
               >
                 Forgot Password?
               </Link>
               <Button
                 sx={{
-                  transition: 'all 0.3s ease',
-                  '&:hover': {
-                    backgroundColor: 'primary.main',
-                    color: "#ffffff",
-                    transform: 'scale(1.1)',
+                  position: 'relative',
+                  overflow: 'hidden',
+                  '&:hover::before': {
+                    content: '""',
+                    position: 'absolute',
+                    top: 0,
+                    left: 0,
+                    width: '100%',
+                    height: '100%',
+                    background: `radial-gradient(circle at ${mouseX}px ${mouseY}px, rgba(0, 123, 255, 0.6), transparent)`,
+                    pointerEvents: 'none',
                   },
                 }}
+                onMouseMove={handleMouseMove}
                 type="submit"
                 variant="outlined"
                 color="primary"
@@ -193,6 +222,16 @@ const Login = () => {
           </form>
         </Container>
       </Box>
+      <Snackbar
+        open={snackbarOpen}
+        autoHideDuration={4000}
+        onClose={handleSnackbarClose}
+        anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
+      >
+        <MuiAlert onClose={handleSnackbarClose} severity="info" sx={{ width: '100%' }}>
+          Forgot Password will be added in the future :)
+        </MuiAlert>
+      </Snackbar>
     </Box>
   );
 };

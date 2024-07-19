@@ -126,23 +126,23 @@ function EventListPage() {
             <Tab label="Open Events" />
             <Tab label="Completed Events" />
           </Tabs>
-          <Button variant="contained" color="primary" onClick={handleCreateEvent} disabled={userRole !== 'Leader'}>
+          <Button variant="contained" color="primary" onClick={handleCreateEvent} hidden={userRole !== 'Leader'}>
             Create Event
           </Button>
         </Box>
         <TableContainer sx={{ maxHeight: 'none' }}>
           <Table>
-          <TableHead>
-  <TableRow sx={{ backgroundColor: '#B0BEC5', color: '#212121' }}>
-    <TableCell sx={{ padding: '16px', fontWeight: 'bold' }}>Name</TableCell>
-    <TableCell sx={{ padding: '16px', fontWeight: 'bold' }}>Start Date</TableCell>
-    <TableCell sx={{ padding: '16px', fontWeight: 'bold' }}>Start Time</TableCell>
-    <TableCell sx={{ padding: '16px', fontWeight: 'bold' }}>Location</TableCell>
-    <TableCell sx={{ padding: '16px', fontWeight: 'bold' }}>Credit Points</TableCell>
-    {currentTab === 0 && userRole === 'Leader' && <TableCell sx={{ padding: '16px', fontWeight: 'bold' }}>Actions</TableCell>}
-    {currentTab === 1 && <TableCell sx={{ padding: '16px', fontWeight: 'bold' }}>Earned Points</TableCell>}
-  </TableRow>
-</TableHead>
+          <TableHead sx={{ '& th': { backgroundColor: 'primary.main', color: 'white' } }}>
+            <TableRow sx={{ backgroundColor: '#B0BEC5', color: '#212121' }}>
+              <TableCell sx={{ padding: '16px', fontWeight: 'bold' }}>Name</TableCell>
+              <TableCell sx={{ padding: '16px', fontWeight: 'bold' }}>Start Date</TableCell>
+              <TableCell sx={{ padding: '16px', fontWeight: 'bold' }}>Start Time</TableCell>
+              <TableCell sx={{ padding: '16px', fontWeight: 'bold' }}>Location</TableCell>
+              <TableCell sx={{ padding: '16px', fontWeight: 'bold' }}>Credit Points</TableCell>
+              {currentTab === 0 && userRole === 'Leader' && <TableCell sx={{ padding: '16px', fontWeight: 'bold' }}>Actions</TableCell>}
+              {currentTab === 1 && <TableCell sx={{ padding: '16px', fontWeight: 'bold' }}>Earned Points</TableCell>}
+            </TableRow>
+          </TableHead>
             <TableBody>
               {(currentTab === 0 ? openEvents : completedEvents).map(event => (
                 <TableRow
