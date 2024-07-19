@@ -1,10 +1,14 @@
 import React, { useEffect, useState } from 'react';
-import { 
-  Container, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper, Button, Dialog, DialogActions, DialogContent, DialogTitle, TextField, MenuItem, Box, IconButton 
+import {
+  Container, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper, Button,
+  Dialog, DialogActions, DialogContent, DialogTitle, TextField, MenuItem, Box, IconButton, Grid,
+  RadioGroup, FormControlLabel, Radio, Select, InputLabel, FormControl, FormLabel, Typography, Toolbar
 } from '@mui/material';
 import DeleteIcon from '@mui/icons-material/Delete';
 import api from '../utils/api';
+import VolunteerUploadPopup from './VolunteerUploadPopup'
 import { useNavigate } from 'react-router-dom';
+import Papa from 'papaparse'; // Import PapaParse for CSV parsing
 
 const ManageVolunteers = () => {
   const [volunteers, setVolunteers] = useState([]);
@@ -12,31 +16,89 @@ const ManageVolunteers = () => {
   const [open, setOpen] = useState(false);
   const [courses, setCourses] = useState([]);
   const [searchQuery, setSearchQuery] = useState('');
+  const [uploadPopupOpen, setUploadPopupOpen] = useState(false);
+  const [volunteerPopupdata, setVolunteerPopupdata] = useState({});
   const nav = useNavigate();
   const [newVolunteer, setNewVolunteer] = useState({
     user: {
       first_name: "",
       last_name: "",
       username: "",
+      password: "",
       email: "",
       blood_group: "",
       gender: ""
     },
     course: "",
     course_year: "",
-    volunteering_year: "",
     role: "Volunteer"
   });
 
-  useEffect(() => {
+  const handleFileUpload = (event) => {
+    const file = event.target.files[0];
+    const reader = new FileReader();
+  
+    reader.onload = (e) => {
+      const csv = e.target.result;
+      const lines = csv.split('\n');
+      const headers = lines[0].split(',');
+      
+      const jsonData = [];
+  
+      for (let i = 1; i < lines.length; i++) {
+        const data = lines[i].split(',');
+        if (data.length === headers.length) {
+          
+          let obj = {};
+          let user_id = data[0].trim();
+          if (user_id){
+            obj['user'] = user_id;
+          }
+          else {
+            obj['user'] = {
+              "username": data[1].trim(),
+              "first_name": data[2].trim(),
+              "last_name": data[3].trim(),
+              "email": data[4].trim(),
+              "blood_group": data[5].trim(),
+              "gender": data[6].trim()
+            };
+          }
+          obj['course'] = data[7].trim();
+          obj['course_year'] = data[8].trim();
+          obj['role'] = data[9].trim();
+          jsonData.push(obj);
+        }
+      }
+  
+      api.post('/admin/volunteers/upload/', jsonData)
+      .then((response) => {
+        setVolunteerPopupdata(response.data)
+        setUploadPopupOpen(true);
+        
+      })
+      .catch((error) => {
+        console.error();
+      })
+    };
+  
+    reader.readAsText(file);
+  };
+
+  const fetchVolunteers = () => {
     api.get('/admin/volunteers/')
       .then((response) => {
         setVolunteers(response.data);
         setFilteredVolunteers(response.data);
       })
       .catch(() => {
-        // Handle error
+        console.error();
       });
+  }
+
+  useEffect(() => {
+    fetchVolunteers();
+
     api.get('admin/college-courses/')
       .then((response) => {
         setCourses(response.data);
@@ -76,6 +138,16 @@ const ManageVolunteers = () => {
     }));
   };
 
+  const handleGenderChange = (e) => {
+    setNewVolunteer((prev) => ({
+      ...prev,
+      user: {
+        ...prev.user,
+        gender: e.target.value
+      }
+    }));
+  };
+
   const handleOpen = () => {
     setOpen(true);
   };
@@ -86,13 +158,14 @@ const ManageVolunteers = () => {
 
   const handleRowClick = (volunteerId) => {
     nav(`/admin/volunteer/${volunteerId}`);
-  }
+  };
 
   const handleSubmit = () => {
     api.post('/admin/volunteers/', newVolunteer)
       .then((response) => {
         setVolunteers([...volunteers, response.data]);
         setFilteredVolunteers([...filteredVolunteers, response.data]);
+        fetchVolunteers();
         setOpen(false);
       })
       .catch((error) => {
@@ -111,20 +184,33 @@ const ManageVolunteers = () => {
       });
   };
 
+  const closeUploadPopup = () => {
+    setUploadPopupOpen(false)
+    fetchVolunteers();
+  }
+
+ 
+
   return (
     <Container>
-      <Box style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '10em' }}>
-      <h1>Volunteer Management</h1>
-        <TextField
-          label="Search by First Name or Last Name"
-          variant="outlined"
-          value={searchQuery}
-          onChange={(e) => setSearchQuery(e.target.value)}
-          style={{ width: 450 }}
-        />
-        <Button variant="contained" color="primary" onClick={handleOpen}>
-          Create Volunteer
-        </Button>
+      <Box style={{ display: 'flex',alignItems: 'center', marginTop: '10em' }}>
+        <Toolbar>Volunteers</Toolbar>
+
+        <Button variant="contained" color="primary" onClick={handleOpen} style={{ margin:'30px'}}>Add New</Button>
+
+          <input
+            accept=".csv"
+            style={{ display: 'none'}}
+            id="contained-button-file"  
+            type="file"
+            onChange={handleFileUpload}
+          />
+          <label htmlFor="contained-button-file"> 
+            <Button variant="contained" component="span" style={{ margin:'30px'}}>Upload</Button>
+          </label>
+
+
+
       </Box>
       <TableContainer
         component={Paper}
@@ -143,8 +229,8 @@ const ManageVolunteers = () => {
             </TableRow>
           </TableHead>
           <TableBody>
-            {filteredVolunteers.map((volunteer) => (
-              <TableRow 
+            {volunteers.map((volunteer) => (
+              <TableRow
                 key={volunteer.id}
                 style={{ cursor: 'pointer' }}
                 onMouseEnter={(e) => {
@@ -168,106 +254,154 @@ const ManageVolunteers = () => {
         </Table>
       </TableContainer>
 
-      <Dialog open={open} onClose={handleClose}>
+      <Dialog open={open} onClose={handleClose} maxWidth='lg'>
         <DialogTitle>Create New Volunteer</DialogTitle>
         <DialogContent>
-          <TextField
-            autoFocus
-            margin="dense"
-            label="First Name"
-            type="text"
-            fullWidth
-            name="first_name"
-            value={newVolunteer.user.first_name}
-            onChange={handleInputChange}
-          />
-          <TextField
-            margin="dense"
-            label="Last Name"
-            type="text"
-            fullWidth
-            name="last_name"
-            value={newVolunteer.user.last_name}
-            onChange={handleInputChange}
-          />
-          <TextField
-            margin="dense"
-            label="Username"
-            type="text"
-            fullWidth
-            name="username"
-            value={newVolunteer.user.username}
-            onChange={handleInputChange}
-          />
-          <TextField
-            margin="dense"
-            label="Email"
-            type="email"
-            fullWidth
-            name="email"
-            value={newVolunteer.user.email}
-            onChange={handleInputChange}
-          />
-          <TextField
-            margin="dense"
-            label="Blood Group"
-            type="text"
-            fullWidth
-            name="blood_group"
-            value={newVolunteer.user.blood_group}
-            onChange={handleInputChange}
-          />
-          <TextField
-            margin="dense"
-            label="Gender"
-            type="text"
-            fullWidth
-            name="gender"
-            value={newVolunteer.user.gender}
-            onChange={handleInputChange}
-          />
-          <TextField
-            select
-            label="Course"
-            fullWidth
-            value={newVolunteer.course}
-            onChange={(e) => setNewVolunteer({ ...newVolunteer, course: e.target.value })}
-          >
-            {courses.map((course) => (
-              <MenuItem key={course.id} value={course.id}>
-                {course.course_name}
-              </MenuItem>
-            ))}
-          </TextField>
-          <TextField
-            margin="dense"
-            label="Course Year"
-            type="text"
-            fullWidth
-            name="course_year"
-            value={newVolunteer.course_year}
-            onChange={(e) => setNewVolunteer({ ...newVolunteer, course_year: e.target.value })}
-          />
-          <TextField
-            margin="dense"
-            label="Volunteering Year"
-            type="text"
-            fullWidth
-            name="volunteering_year"
-            value={newVolunteer.volunteering_year}
-            onChange={(e) => setNewVolunteer({ ...newVolunteer, volunteering_year: e.target.value })}
-          />
-          <TextField
-            select
-            label="Role"
-            fullWidth
-            value={newVolunteer.role}
-            onChange={handleRoleChange}
-          >
-            <MenuItem value="Volunteer">Volunteer</MenuItem>
-            <MenuItem value="Leader">Leader</MenuItem>
-          </TextField>
+          <Grid container spacing={2}>
+            {/* First Name and Last Name */}
+            <Grid item xs={6}>
+              <TextField
+                required
+                margin="dense"
+                label="First Name"
+                type="text"
+                fullWidth
+                name="first_name"
+                value={newVolunteer.user.first_name}
+                onChange={handleInputChange}
+              />
+            </Grid>
+            <Grid item xs={6}>
+              <TextField
+                margin="dense"
+                required
+                label="Last Name"
+                type="text"
+                fullWidth
+                name="last_name"
+                value={newVolunteer.user.last_name}
+                onChange={handleInputChange}
+              />
+            </Grid>
+            {/* Username and Email */}
+            <Grid item xs={6}>
+              <TextField
+                margin="dense"
+                required
+                label="Username"
+                type="text"
+                fullWidth
+                name="username"
+                value={newVolunteer.user.username}
+                onChange={handleInputChange}
+              />
+            </Grid>
+            <Grid item xs={6}>
+              <TextField
+                margin="dense"
+                label="Email"
+                type="email"
+                required
+                fullWidth
+                name="email"
+                value={newVolunteer.user.email}
+                onChange={handleInputChange}
+              />
+            </Grid>
+            {/* Blood Group, Gender, and Course */}
+            <Grid item xs={4}>
+              <FormControl fullWidth margin="dense">
+                <InputLabel>Blood Group</InputLabel>
+                <Select
+                  name="blood_group"
+                  required
+                  value={newVolunteer.user.blood_group}
+                  onChange={handleInputChange}
+                >
+                  <MenuItem value="A+">A+</MenuItem>
+                  <MenuItem value="A-">A-</MenuItem>
+                  <MenuItem value="B+">B+</MenuItem>
+                  <MenuItem value="B-">B-</MenuItem>
+                  <MenuItem value="O+">O+</MenuItem>
+                  <MenuItem value="O-">O-</MenuItem>
+                  <MenuItem value="AB+">AB+</MenuItem>
+                  <MenuItem value="AB-">AB-</MenuItem>
+                </Select>
+              </FormControl>
+            </Grid>
+            <Grid item xs={4}>
+              <FormControl component="fieldset" margin="dense">
+              <FormLabel id="gender-radio-group">Gender</FormLabel>
+                <RadioGroup
+                  aria-labelledby="gender-radio-group"
+                  row
+                  name="gender"
+                  required
+                  value={newVolunteer.user.gender}
+                  onChange={handleGenderChange}
+                >
+                  <FormControlLabel value="M" control={<Radio />} label="Male" />
+                  <FormControlLabel value="F" control={<Radio />} label="Female" />
+                  <FormControlLabel value="O" control={<Radio />} label="Other" />
+                </RadioGroup>
+              </FormControl>
+            </Grid>
+            <Grid item xs={4}>
+              <FormControl fullWidth margin="dense">
+                <InputLabel>Course</InputLabel>
+                <Select
+                  name="course"
+                  required
+                  value={newVolunteer.course}
+                  onChange={(e) => setNewVolunteer({ ...newVolunteer, course: e.target.value })}
+                >
+                  {courses.map((course) => (
+                    <MenuItem key={course.id} value={course.id}>
+                      {course.course_name}
+                    </MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
+            </Grid>
+            {/* Course Year, Volunteering Year, and Role */}
+            <Grid item xs={4}>
+              <TextField
+                margin="dense"
+                label="Course Year"
+                required
+                type="text"
+                fullWidth
+                name="course_year"
+                value={newVolunteer.course_year}
+                onChange={(e) => setNewVolunteer({ ...newVolunteer, course_year: e.target.value })}
+              />
+            </Grid>
+            <Grid item xs={4}>
+              <TextField
+                margin="dense"
+                required
+                label="Password"
+                type="password"
+                fullWidth
+                name="password"
+                value={newVolunteer.user.password}
+                onChange={handleInputChange}
+              />
+            </Grid>
+            <Grid item xs={4}>
+              <FormControl fullWidth margin="dense">
+                <Select
+                  value={newVolunteer.role}
+                  onChange={handleRoleChange}
+                >
+                  <MenuItem value="Volunteer">Volunteer</MenuItem>
+                  <MenuItem value="Leader">Leader</MenuItem>
+                </Select>
+              </FormControl>
+            </Grid>
+          </Grid>
         </DialogContent>
+              
         <DialogActions>
           <Button onClick={handleClose} color="primary">
             Cancel
@@ -277,6 +411,7 @@ const ManageVolunteers = () => {
           </Button>
         </DialogActions>
       </Dialog>
+      <VolunteerUploadPopup open={uploadPopupOpen} handleClose={closeUploadPopup} data={volunteerPopupdata} />
     </Container>
   );
 };

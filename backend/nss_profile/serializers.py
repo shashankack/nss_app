@@ -30,7 +30,13 @@ class VolunteerSerializer(serializers.ModelSerializer):
     def get_volunteering_year(self, obj):
         return obj.volunteering_year.label
 
-
+class VolunteerCreateSerializer(serializers.ModelSerializer):
+  
+    class Meta:
+        model = Volunteer
+        fields = '__all__'
+  
+  
 class UserSerializer(serializers.ModelSerializer):
     class Meta:
         model = User

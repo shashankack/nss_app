@@ -23,6 +23,10 @@ export function clearTokens() {
     localStorage.removeItem('refreshToken');
   }
 
+  if (localStorage.getItem('userDetails')) {
+    localStorage.removeItem('userDetails');
+  }
+
 }
 
 // Function to perform refresh token API call

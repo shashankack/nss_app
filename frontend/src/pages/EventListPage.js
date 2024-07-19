@@ -44,13 +44,28 @@ function EventListPage() {
   const fetchEvents = async (status) => {
     return await api.get(`/event?status=${status}`);
   };
+  const fetchAttendedEvents = async () => {
+    return await api.get('/volunteer/eventsAttended');
+  };
+
+  const fetchCompletedEvents = async (attendedE) => {
+    const completedData = await fetchEvents('Completed');
+    return completedData.data.map((event) => ({
+      ...event,
+      earned_points: attendedE.includes(event.id) ? event.credit_points : 0,
+    }));
+  };
+
 
   const fetchData = async () => {
     try {
       const openData = await fetchEvents('Open');
       setOpenEvents(openData.data);
-      const completedData = await fetchEvents('Completed');
-      setCompletedEvents(completedData.data);
+      const attendedData = await fetchAttendedEvents();
+      const completedData = await fetchCompletedEvents(attendedData.data);
+      setCompletedEvents(completedData);
+      console.log('Open', openEvents);
+      console.log('Completed', completedEvents);
     } catch (error) {
       console.error('Failed to fetch events:', error);
     } finally {

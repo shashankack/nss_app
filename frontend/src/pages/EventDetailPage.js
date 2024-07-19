@@ -141,6 +141,7 @@ const EventDetails = () => {
     }, {});
   };
 
+  const userDetails = JSON.parse(localStorage.getItem('userDetails'));
   const groupedComments = groupCommentsByDate(comments);
 
   if (!event) {
@@ -151,7 +152,6 @@ const EventDetails = () => {
     <Container
       style={{ maxWidth: '1390px' }}
       sx={{ backgroundColor: '#f5f5f5', padding: 3, borderRadius: 2, ml: 5, mt: 5, boxShadow: 10 }}>
-      {/* Row 1: Header */}
       <Box sx={{ marginBottom: 2 }}>
         <Typography variant="h4" sx={{ lineHeight: '1.2' }}>
           {event.name}
@@ -160,25 +160,17 @@ const EventDetails = () => {
           <Typography variant="subtitle1" color="primary">
             Credit Points: {event.credit_points} | Status: {status}
           </Typography>
-          <Button
-            variant="contained"
-            onClick={handleStatusChange}
-            disabled={status === 'Completed'}
-            hidden={volunteers.role != 'Leader'}
-          >
-            {status === 'Open' ? 'Start Event' : status === 'In Progress' ? 'End Event' : 'Event Ended'}
-          </Button>
+          {userDetails.role === 'Leader' && (
+            <Button
+              variant="contained"
+              onClick={handleStatusChange}
+              disabled={status === 'Completed'}
+            >
+              {status === 'Open' ? 'Start Event' : status === 'In Progress' ? 'End Event' : 'Event Ended'}
+            </Button>
+          )}
         </Box>
       </Box>
-
-      {/* Row 2: Description */}
-      <Box sx={{ marginBottom: 2 }}>
-        <Typography variant="h5" gutterBottom>
-          Description
-        </Typography>
-        <div dangerouslySetInnerHTML={{ __html: event.description }} />
-      </Box>
-
       {/* Row 3: Compact Schedule */}
       <Box sx={{ marginBottom: 2 }}>
         <Typography variant="h5" gutterBottom>
@@ -189,14 +181,22 @@ const EventDetails = () => {
         </Typography>
       </Box>
 
-      {/* Row 4: Instructions */}
+      {/* Row 2: Description */}
       <Box sx={{ marginBottom: 2 }}>
         <Typography variant="h5" gutterBottom>
-          Instructions to Volunteers
+          Description
         </Typography>
-        <Typography variant="body1">{event.instructions}</Typography>
+        <div dangerouslySetInnerHTML={{ __html: event.description }} />
       </Box>
 
+      <Box sx={{ marginBottom: 2 }}>
+        <Typography variant="h5" gutterBottom>
+        Instructions to Volunteers
+        </Typography>
+        <div dangerouslySetInnerHTML={{ __html: event.instructions }} />
+      </Box>
+
+      <ImageCarousel></ImageCarousel>
       {/* Divider */}
       <Box sx={{ borderTop: '1px solid #ccc', marginBottom: 2 }} />
 
@@ -250,10 +250,6 @@ const EventDetails = () => {
         />
       </Box>
 
-      {/* Row 5: Image Carousel */}
-      <ImageCarousel />
-
-      {/* Row 7: Attended Volunteers */}
       <Box
         sx={{
           position: 'fixed',
@@ -271,6 +267,7 @@ const EventDetails = () => {
         <Typography variant="h5" gutterBottom>
           Attended Volunteers
         </Typography>
+        
         <Box sx={{ height: '70%', overflowY: 'auto', padding: 5 }}>
           {attendedVolunteers.length === 0 ? (
             <Typography>No volunteers attended.</Typography>
@@ -307,15 +304,17 @@ const EventDetails = () => {
           )}
         </Box>
         <Box sx={{ ml: 65, mt: 12 }}>
-          <Button  
-            variant="contained" 
-            onClick={handleOpen}
-            hidden={volunteers.role != 'Leader'}
-            disabled={status !== 'In Progress'}>Mark Attendance</Button>
+          {status === 'In Progress' && userDetails.role === 'Leader' ? (
+            <Button variant="contained" onClick={handleOpen} disabled={false}>
+              Mark Attendance
+            </Button>
+          ) : (
+            <Button variant="contained" disabled>
+              Mark Attendance
+            </Button>
+          )}
         </Box>
       </Box>
-
-      {/* Attendance Modal */}
       <Modal open={open} onClose={handleClose}>
         <Box sx={{ 
           bgcolor: 'background.paper', 

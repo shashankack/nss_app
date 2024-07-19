@@ -23,11 +23,13 @@ function ResponsiveAppBar() {
   const [anchorElUser, setAnchorElUser] = React.useState(null);
   const [userProfile, setUserProfile] = React.useState({});
 
+
   React.useEffect(() => {
     if (isNotLoginPage) {
       api.get('/loggedinuser/')
         .then(response => {
           setUserProfile(response.data);
+          localStorage.setItem('userDetails', JSON.stringify(response.data));
         })
         .catch(error => {
           console.error(error);
@@ -41,7 +43,9 @@ function ResponsiveAppBar() {
 
   const handleLogout = () => {
     clearTokens();
+    handleCloseUserMenu();
     nav("/login");
+    
   };
 
   const handleCloseUserMenu = () => {
@@ -69,15 +73,15 @@ function ResponsiveAppBar() {
             <Typography fontFamily='custom-font' variant="h5" noWrap sx={{ mr: 2 }}>
               Role: {userProfile.role}
             </Typography>
-            {userProfile.credits_earned && (
+            {userProfile.role != 'Admin' ? (
               <Tooltip title="Credit Points">
                 <IconButton color="inherit" sx={{ mr: 2, ml: 20 }}>
-                  <Badge badgeContent={userProfile.credits_earned} color="error">
+                  <Badge badgeContent={''+userProfile.credits_earned} color="error">
                     <AutoAwesomeIcon style={{ fontSize: 40 }} />
                   </Badge>
                 </IconButton>
               </Tooltip>
-            )}
+            ) : ''}
             <Tooltip title="Open Settings">
               <IconButton onClick={handleOpenUserMenu} sx={{ p: 0 }}>
                 <Avatar alt={`${userProfile.first_name} ${userProfile.last_name}`} src="/static/images/avatar/2.jpg">

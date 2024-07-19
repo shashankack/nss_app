@@ -1,3 +1,7 @@
+from django.db.models.functions import Cast
+from django.db.models import Count, F, IntegerField, FloatField, ExpressionWrapper, Sum
+from django.db.models.functions import Cast
+from django.db.models import IntegerField
 from rest_framework.response import Response
 from rest_framework import status
 from rest_framework.views import APIView
@@ -99,8 +103,78 @@ class EventsAttendedAPIView(APIView):
                                             volunteer__volunteering_year=NSSYear.current_year(),
                                             ).select_related('event').values_list('event__id', flat=True))
         return Response(events, status=status.HTTP_200_OK)
-        
+
+
     
+#Leaderboard view with get reqeust which will return the top volunterss with highest credit score
+class LeaderboardAPIView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get_college(self, user_id, volunteering_year):
+        return Volunteer.objects.get(user_id=user_id, volunteering_year=volunteering_year)
+    
+    def get(self, request):
+        volunteering_year = NSSYear.current_year()
+        college = self.get_college(request.user.id, volunteering_year).course.college
+        print('******',college)
+        volunteers_with_credits = Volunteer.objects.filter(
+            volunteering_year=NSSYear.current_year(),
+            user__is_active=True,
+            course__college=college,
+            ).annotate(
+                total_credits=Sum('attendance__event__credit_points'),
+                first_name=F('user__first_name'),
+                last_name=F('user__last_name'),
+                ).values('first_name', 'last_name', 'user_id', 'total_credits')
+        sorted_volunteers = sorted(volunteers_with_credits, key=lambda x: x['total_credits'] or 0, reverse=True)
+
+        ranked_volunteers = []
+        current_rank = 1
+        previous_credits = None
+
+        for idx, volunteer in enumerate(sorted_volunteers, start=1):
+            if volunteer['total_credits'] != previous_credits:
+                current_rank = idx
+            volunteer['rank'] = current_rank
+            previous_credits = volunteer['total_credits']
+            ranked_volunteers.append(volunteer)
+        return Response(ranked_volunteers, status=status.HTTP_200_OK)
+    
+class ServiceHoursAPIView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get_college(self, user_id, volunteering_year):
+        return Volunteer.objects.get(user_id=user_id, volunteering_year=volunteering_year)
+
+    def get(self, request):
+        # Return total service hours for the selected college by multiplying number of attended volunteers with duration field in Event for completed events
+        volunteering_year = NSSYear.current_year()
+        college = self.get_college(request.user.id, volunteering_year).course.college
+        # completed_events = Events.objects.filter(college=college, status=Events.STATUS_COMPLETED)
+
+        events_with_service_hours = Events.objects.filter(
+            college_id=college.id,
+            status=Events.STATUS_COMPLETED
+        ).annotate(
+            # Count active volunteers for each event
+            active_volunteers_count=Count('attendance'),
+            # Convert duration to integer hours (assuming it’s stored as a text field representing hours)
+            duration_hours=Cast('duration', FloatField())
+        ).annotate(
+            # Calculate service hours for each event
+            service_hours=ExpressionWrapper(
+                F('duration_hours') * F('active_volunteers_count'),
+                output_field=FloatField()
+            )
+        ).aggregate(
+            total_service_hours=Sum('service_hours')
+        )
+
+
+
+        total_service_hours = events_with_service_hours['total_service_hours'] or 0
+        return Response(total_service_hours, status=status.HTTP_200_OK) 
+
 class EventAttendedVolunteersAPIView(APIView):
     permission_classes = [IsAuthenticated]
     
