@@ -11,8 +11,10 @@ class VolunteerSerializer(serializers.ModelSerializer):
     email = serializers.CharField(source='user.email', read_only=True)
     first_name = serializers.CharField(source='user.first_name', read_only=True)
     last_name = serializers.CharField(source='user.last_name', read_only=True)
+    gender = serializers.CharField(source='user.gender', read_only=True)
+    blood_group = serializers.CharField(source='user.blood_group', read_only=True)
     college = serializers.SerializerMethodField()
-    volunteering_year = NSSYearSerializer()
+    volunteering_year = serializers.SerializerMethodField()
 
     class Meta:
         model = Volunteer
@@ -28,7 +30,13 @@ class VolunteerSerializer(serializers.ModelSerializer):
     def get_volunteering_year(self, obj):
         return obj.volunteering_year.label
 
-
+class VolunteerCreateSerializer(serializers.ModelSerializer):
+  
+    class Meta:
+        model = Volunteer
+        fields = '__all__'
+  
+  
 class UserSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
@@ -43,6 +51,12 @@ class UserSerializer(serializers.ModelSerializer):
         return user 
         
 class CollegeAdminSerializer(serializers.ModelSerializer):
+    username = serializers.CharField(source='user.username', read_only=True)
+    email = serializers.CharField(source='user.email', read_only=True)
+    first_name = serializers.CharField(source='user.first_name', read_only=True)
+    last_name = serializers.CharField(source='user.last_name', read_only=True)
+    college = serializers.SerializerMethodField()
+    volunteering_year = serializers.SerializerMethodField()
     class Meta:
         model = CollegeAdmin
         fields = '__all__'
@@ -50,6 +64,12 @@ class CollegeAdminSerializer(serializers.ModelSerializer):
     def create(self, validated_data):
         admin = CollegeAdmin.objects.create(**validated_data)
         return admin
+    
+    def get_college(self, obj):
+        return obj.college.college_name
+    
+    def get_volunteering_year(self, obj):
+        return NSSYear.current_year().label
     
 
 class CollegeSerializer(serializers.ModelSerializer):
@@ -69,3 +89,4 @@ class CollegeCoursesSerializer(serializers.ModelSerializer):
     def create(self, validated_data):
         course = CollegeCourses.objects.create(**validated_data)
         return course
+    
