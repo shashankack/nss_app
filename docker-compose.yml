@@ -1,4 +1,4 @@
-version: '3.9'  # Updated to the latest Compose specification
+version: '3.7'
 
 services:
   nss_api:
@@ -26,7 +26,6 @@ services:
     volumes:
       - ./frontend:/app
       - /app/node_modules
-      
     #command: tail -f /dev/null
     command: npm start
 
@@ -35,9 +34,9 @@ services:
     environment:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: password
-      POSTGRES_DB: nss
+      POSTGRES_DB: postgres
     ports:
-      - "5432:5432"
+      - "5432:5432"      
     volumes:
       - postgres_data:/var/lib/postgresql/data
 

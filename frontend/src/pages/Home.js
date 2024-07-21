@@ -1,95 +1,137 @@
-import React, { useEffect, useState } from 'react';
-import { Container, Grid, Card, CardContent, Typography, CardActionArea, Box } from '@mui/material';
-import { useNavigate } from 'react-router-dom';
-import Groups2Icon from '@mui/icons-material/Groups2';
-import EventIcon from '@mui/icons-material/Event';
-import PersonIcon from '@mui/icons-material/Person';
-import logo from "../assets/nss_logo.png";
+import React, { useState, useEffect } from 'react';
+import { Container, Tabs, Tab, Box, Typography, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper, CircularProgress } from '@mui/material';
+import { useNavigate } from 'react-router-dom'; // Assuming you are using React Router for navigation
 import api from '../utils/api';
-import EmojiEventsIcon from '@mui/icons-material/EmojiEvents';
-import Alert from '@mui/material/Alert';
-import CheckIcon from '@mui/icons-material/Check';
+
+const fetchEvents = async (status) => {
+  return await api.get(`/event?status=${status}`);
+};
+
+const fetchAttendedEvents = async () => {
+  return await api.get('/volunteer/eventsAttended');
+};
+
+const TabPanel = (props) => {
+  const { children, value, index, ...other } = props;
+
+  return (
+    <div
+      role="tabpanel"
+      hidden={value !== index}
+      id={`simple-tabpanel-${index}`}
+      aria-labelledby={`simple-tab-${index}`}
+      {...other}
+    >
+      {value === index && (
+        <Box sx={{ p: 3 }}>
+          {children}
+        </Box>
+      )}
+    </div>
+  );
+};
 
 const HomePage = () => {
-    const [userRole, setUserRole] = useState('');
-    const [college, setCollege] = useState('');
-    const [serviceHours, setServiceHours] = useState('');
-    const nav = useNavigate();
+  const [openEvents, setOpenEvents] = useState([]);
+  const [completedEvents, setCompletedEvents] = useState([]);
+  const [attendedEvents, setAttendedEvents] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [value, setValue] = useState(0);
 
-    useEffect(() => {
-        // Fetch the logged-in user's role
-        api.get('/loggedinuser')
-            .then(response => {setUserRole(response.data.role); setCollege(response.data.college)})
-            .catch(error => console.error('Error fetching user role:', error));
+  const nav = useNavigate();
 
-        api.get('/service-hours/')
-            .then(response => setServiceHours(response.data))
-            .catch(error => console.error('Error fetching user role:', error));
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const openData = await fetchEvents('Open');
+        setOpenEvents(openData.data);
+        const attendedData = await fetchAttendedEvents();
+        setAttendedEvents(attendedData.data);
+        const completedData = await fetchCompletedEvents(attendedData.data);
+        setCompletedEvents(completedData);
         
-    }, []);
-
-    const handleCardClick = (path) => {
-        nav(path);
+      } catch (error) {
+        console.error('Failed to fetch events:', error);
+      } finally {
+        setLoading(false);
+      }
     };
 
-    function HomeCard({ title, tagline, url, icon }) {
-        return (
-            <Grid item xs={12} md={4}>
-                <Card elevation={15}>
-                    <CardActionArea onClick={() => handleCardClick(url)}>
-                        <CardContent>
-                            <Box display="flex" alignItems="center">
-                                {icon}
-                                <Typography variant="h5">{title}</Typography>
-                            </Box>
-                            <Typography variant="body2">{tagline}</Typography>
-                        </CardContent>
-                    </CardActionArea>
-                </Card>
-            </Grid>
-        );
-    }
+    fetchData();
+  }, []);
 
-    const AdminCards = () => (
-        <Container>
-            <Grid container spacing={6} justifyContent="center">
-                <HomeCard title="Manage Volunteers" tagline="Manage volunteers of your college." url="admin/manage-volunteers" icon={<Groups2Icon style={{ marginRight: 10, marginTop: '-0.5rem', fontSize: 60 }} />} />
-                <HomeCard title="Manage Events" tagline="Create and manage events." url="/events" icon={<EventIcon style={{ marginRight: 10, marginTop: '-0.5rem', fontSize: 60 }} />} />
-                <HomeCard title="My Profile" tagline="View and edit your profile." url="/profile" icon={<PersonIcon style={{ marginRight: 10, marginTop: '-0.5rem', fontSize: 60 }} />} />
-                <HomeCard title="Leaderboard" tagline="View the leaderboard." url="/leaderboard" icon={<EmojiEventsIcon style={{ marginRight: 10, marginTop: '-0.5rem', fontSize: 60 }} />}/>
-            </Grid>
-        </Container>
-    );
+  const fetchCompletedEvents = async (attendedE) => {
+    const completedData = await fetchEvents('Completed');
+    // Add Earned Points column based on attendance
+    return completedData.data.map(event => ({
+      ...event,
+      earned_points: attendedE.includes(event.id) ? event.credit_points : 0
+    }));
+  };
 
-    const VolunteerCards = () => (
-        <Container>
-            <Grid container spacing={6} justifyContent="center">
-                <HomeCard title="View Events" tagline="Upcoming and Completed Events." url="/events" icon={<EventIcon style={{ marginRight: 10, marginTop: '-0.5rem', fontSize: 60 }} />} />
-                <HomeCard title="My Profile" tagline="View and edit your profile." url="/profile" icon={<PersonIcon style={{ marginRight: 10, marginTop: '-0.5rem', fontSize: 60 }} />} />
-                <HomeCard title="Leaderboard" tagline="View the leaderboard." url="/leaderboard" icon={<EmojiEventsIcon style={{ marginRight: 10, marginTop: '-0.5rem', fontSize: 60 }} />} />
-            </Grid>
-        </Container>
-    );
+  const handleChange = (event, newValue) => {
+    setValue(newValue);
+  };
 
-    const LeaderCards = () => (
-        <Container>
-            <Grid container spacing={6} justifyContent="center">
-                <HomeCard title="Manage Events" tagline="Create and manage events." url="/events" icon={<EventIcon style={{ marginRight: 10, marginTop: '-0.5rem', fontSize: 60 }} />} />
-                <HomeCard title="My Profile" tagline="View and edit your profile." url="/profile" icon={<PersonIcon style={{ marginRight: 10, marginTop: '-0.5rem', fontSize: 60 }} />} />
-                <HomeCard title="Leaderboard" tagline="View the leaderboard." url="/leaderboard" icon={<EmojiEventsIcon style={{ marginRight: 10, marginTop: '-0.5rem', fontSize: 60 }} />}/>
-            </Grid>
-        </Container>
-    );
+  const handleRowClick = (eventId) => {
+    nav(`/event/${eventId}`);
+  };
 
+  const renderTable = (events) => (
+    <TableContainer component={Paper}>
+      <Table>
+        <TableHead>
+          <TableRow>
+            <TableCell>Name</TableCell>
+            <TableCell>Description</TableCell>
+            <TableCell>Start Date</TableCell>
+            <TableCell>Start Time</TableCell>
+            <TableCell>Location</TableCell>
+            <TableCell>Credit Points</TableCell>
+            {value === 1 && <TableCell>Earned Points</TableCell>}
+          </TableRow>
+        </TableHead>
+        <TableBody>
+          {events.map((event) => (
+            <TableRow key={event.id} onClick={() => handleRowClick(event.id)} style={{ cursor: 'pointer' }}>
+              <TableCell>{event.name}</TableCell>
+              <TableCell>{event.description}</TableCell>
+              <TableCell>{event.start_date}</TableCell>
+              <TableCell>{event.start_time}</TableCell>
+              <TableCell>{event.location}</TableCell>
+              <TableCell>{event.credit_points}</TableCell>
+              {value === 1 && <TableCell>{event.earned_points}</TableCell>}
+            </TableRow>
+          ))}
+        </TableBody>
+      </Table>
+    </TableContainer>
+  );
+
+  if (loading) {
     return (
-        <div>
-            <img src={logo} alt="Image" style={{ display: 'block', margin: '5em auto', width: '18%' }} />
-            {userRole === 'Admin' ? <AdminCards /> : userRole === 'Volunteer' ? <VolunteerCards /> : <LeaderCards />}
-            <Alert icon={<CheckIcon fontSize="inherit" />} severity="success">
-      Thank you for your service. Together {college} has contributed {serviceHours} hours of service to our community.
-            </Alert>
-        </div>
+      <Container sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh' }}>
+        <CircularProgress />
+      </Container>
     );
+  }
+
+  return (
+    <Container>
+      <Box sx={{ borderBottom: 1, borderColor: 'divider' }}>
+        <Tabs value={value} onChange={handleChange} aria-label="event tabs">
+          <Tab label="Open Events" />
+          <Tab label="Completed Events" />
+        </Tabs>
+      </Box>
+      <TabPanel value={value} index={0}>
+        {openEvents && openEvents.length > 0 ? renderTable(openEvents) : <Typography>No Open Events</Typography>}
+      </TabPanel>
+      <TabPanel value={value} index={1}>
+        {completedEvents && completedEvents.length > 0 ? renderTable(completedEvents) : <Typography>No Completed Events</Typography>}
+      </TabPanel>
+    </Container>
+  );
 };
 
 export default HomePage;

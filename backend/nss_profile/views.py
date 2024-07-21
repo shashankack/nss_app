@@ -5,230 +5,98 @@ from .models import Volunteer, User, NSSYear
 from .serializers import *
 from rest_framework.permissions import IsAuthenticated
 from .permissions import *
-from nss_events.models import Attendance, Events
-from nss_events.views import EventsAttendedAPIView
+from nss_events.models import Attendance
 #APIViews to handle Volunteers
 
 
 class LoggedInUserAPIView(APIView):
-    def get_college(self, user_id, volunteering_year):
-        return Volunteer.objects.get(user_id=user_id, volunteering_year=volunteering_year).course.college
-
     def get(self, request):
         self.permission_classes = [IsAuthenticated]
         self.check_permissions(request)
-        admin = CollegeAdmin.objects.filter(id=request.user.id).first()
-        if admin:
-            serializer = CollegeAdminSerializer(admin)
-            values = serializer.data
-            values['role'] = 'Admin'
-        else:
-            volunteering_year = NSSYear.current_year()
-            college = self.get_college(request.user.id, volunteering_year)
-            volunteer = Volunteer.objects.get(user_id=request.user.id)
-            serializer = VolunteerSerializer(volunteer)
-            values = serializer.data
-            credits = Attendance.objects.filter(volunteer__user_id=request.user.id,
-                                                volunteer__role=volunteer.role,
-                                                volunteer__volunteering_year=NSSYear.current_year(),
-                                                ).select_related('event').values_list('event__credit_points', flat=True)
-            total_events = Events.objects.filter(status='Completed', volunteering_year=NSSYear.current_year(), college=college).count()
-            attended_events = Attendance.objects.filter(volunteer__user_id=request.user.id,
-                                                        event__volunteering_year=NSSYear.current_year(),
-                                                        ).count()
-            if total_events and attended_events:
-                values['attendance_percentage'] = (attended_events/total_events) * 100
-            else:
-                values['attendance_percentage'] = 0
-            values['credits_earned'] = sum(list(credits))
+        volunteer = Volunteer.objects.filter(user_id=request.user.id).first()
+        print(volunteer.user.first_name)
+        serializer = VolunteerSerializer(volunteer)
+        values = serializer.data
+        credits = Attendance.objects.filter(volunteer__user_id=request.user.id,
+                                            volunteer__volunteering_year=NSSYear.current_year(),
+                                            ).select_related('event').values_list('event__credit_points', flat=True)
+        values['credits_earned'] = sum(list(credits))
         return Response(values, status=status.HTTP_200_OK)
     
-class VolunteerAPIView(APIView):
+
+class VolunteerAPIView(APIView): #College Admin, Leader
     permission_classes = [IsAuthenticated]
+    #TODO: Validate collgee for admin in all methods
 
-    def get_college(self, user_id, volunteering_year):
-        return Volunteer.objects.filter(user_id=user_id, volunteering_year=volunteering_year).first()
-
-    def get(self, request):
-        event_id = request.GET.get('event_id')
-        volunteering_year = NSSYear.current_year()
-        college = self.get_college(request.user.id, volunteering_year)
-        attended_volunteers = Attendance.objects.filter(event_id=event_id).values_list('volunteer_id', flat=True)
-        volunteers = Volunteer.objects.filter(course__college=college.id).exclude(id__in=attended_volunteers)
-        serializer = VolunteerSerializer(volunteers, many=True)
-        return Response(serializer.data, status=status.HTTP_200_OK)
-
-
-class UploadVolunteersAPIView(APIView):
-    permission_classes = [IsAuthenticated]
     def get_admins_college(self, user_id):
-        try:
-            return CollegeAdmin.objects.get(user_id=user_id).college
-        except CollegeAdmin.DoesNotExist:
-            return None
-
-    def post(self, request):
-        volunteering_year = NSSYear.current_year()
-        college = self.get_admins_college(request.user.id)
-        data_list = request.data # Assuming 'users' is the key for the array of volunteer data
-
-        if data_list is None or not isinstance(data_list, list):
-            return Response("A list of user data is required", status=status.HTTP_400_BAD_REQUEST)
-
-        created_volunteers = []
-        errors = []
-
-        for user_data in data_list:
-            user = None
-            user_object = user_data.get("user")
-            if isinstance(user_object, dict):
-                username = user_object.get('username')
-                user = User.objects.filter(username=username).first()
-                if not user:
-                    user_object['password'] = 'pleaserestme'
-                    serializer = UserSerializer(data=user_object)
-                    if serializer.is_valid():
-                        user = serializer.save()
-                    else:
-                        errors.append({"user_data": user_data, "errors": serializer.errors})
-                        continue
-
-            elif isinstance(user_object, int):
-                user = User.objects.filter(pk=user_object).first()
-                if not user:
-                    errors.append({"user_data": user_data, "errors": "User does not exist"})
-                    continue
-
-            vol = Volunteer.objects.filter(user=user, volunteering_year=volunteering_year).first()
-            if vol:
-                user_ = vol.user
-                user_.is_active=True
-                user_.save()
-                errors.append({"user_data": user_data, "errors": "This volunteer already has a profile with the same volunteering year"})
-                continue
-
-            if not user:
-                errors.append({"user_data": user_data, "errors": "User does not exist"})
-                continue
-
-            user_data['user'] = user.id
-            user_data['volunteering_year'] = volunteering_year.id
-            serializer = VolunteerCreateSerializer(data=user_data)
-            if serializer.is_valid():
-                serializer.save()
-                created_volunteers.append(serializer.data)
-            else:
-                errors.append({"user_data": user_data, "errors": serializer.errors})
-
-        if errors:
-            return Response({"created_volunteers": [volunteer for volunteer in created_volunteers], "errors": errors}, status=status.HTTP_200_OK)
-
-        return Response({"created_volunteers": [volunteer for volunteer in created_volunteers]}, status=status.HTTP_200_OK)
-
-class ResetPasswordAPIView(APIView):
-    permission_classes = [IsAuthenticated]
-    def post(self, request):
-        user = request.user
-        data = request.data
-        password = data.get('password')
-        if not password:
-            return Response("Password is required", status=status.HTTP_400_BAD_REQUEST)
-        user.set_password(password)
-        user.save()
-        return Response("Password has been reset", status=status.HTTP_200_OK)
-
-class ManageVolunteerAPIView(APIView): #College Admin
-    permission_classes = [IsAuthenticated]    
-    def get_admins_college(self, user_id):
-        try:
-            return CollegeAdmin.objects.get(user_id=user_id).college
-        except CollegeAdmin.DoesNotExist:
-            return None
+        return CollegeAdmin.objects.get(user_id=user_id).college
+    
+    def get_leaders_college(self, user_id, volunteering_year):
+        return Volunteer.objects.get(user_id=user_id, role=Volunteer.LEADER, volunteering_year=volunteering_year)
+        
 
     def get(self, request, volunteer_id = None):
-        college = self.get_admins_college(request.user.id)
-        admin = CollegeAdmin.objects.filter(user = request.user.id).exists()
-        if not admin:
-            return Response('You are not authorized to view this content', status=status.HTTP_403_FORBIDDEN)
+        college = self.get_leaders_college(request.user.id)
 
         if volunteer_id is not None:
-            volunteer = Volunteer.objects.filter(pk=volunteer_id, course__college=college).first()
-            
+            volunteer = Volunteer.objects.filter(pk=volunteer_id, course_college=college).first()
             if volunteer:
-                if volunteer.user.is_active:
-                    serializer = VolunteerSerializer(volunteer)
-                    return Response(serializer.data, status=status.HTTP_200_OK)
-                else:
-                    return Response("Volunteer does not exist", status=status.HTTP_400_BAD_REQUEST)
+                serializer = VolunteerSerializer(volunteer)
+                return Response(serializer.data, status=status.HTTP_200_OK)
             else:
-                return Response("Volunteer does not exist", status=status.HTTP_404_NOT_FOUND)
+                return Response("Invalid id or volunteer does not exist", status=status.HTTP_404_NOT_FOUND)         
         else:
-            volunteers = Volunteer.objects.filter(course__college=college, user__is_active=True)
+            volunteers = Volunteer.objects.filter(course_college=college)
             serializer = VolunteerSerializer(volunteers, many=True)
             return Response(serializer.data, status=status.HTTP_200_OK)        
 
-    def get_admins_college(self, user_id):
-        try:
-            return CollegeAdmin.objects.get(user_id=user_id).college
-        except CollegeAdmin.DoesNotExist:
-            return None
- 
+
     def post(self, request):
-        volunteering_year = NSSYear.current_year()  
-        college = self.get_admins_college(request.user.id)
+        volunteering_year = NSSYear.current_year()
+        college = self.get_leaders_college(request.user.id, volunteering_year)
         data = request.data
+        #TODO check if the courser and admin callege combination is acceptable
         user_data = data.get('user')
         
         if user_data is None:
             return Response("User data is required", status=status.HTTP_400_BAD_REQUEST)
-        
+
         if isinstance(user_data, dict):
-            user = User.objects.filter(username=user_data['username']).first()
-            if not user:
-                serializer = UserSerializer(data=user_data)
-                if serializer.is_valid():
-                    user = serializer.save()
-                else:
-                    return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-                
+            serializer = UserSerializer(data=user_data)
+            if serializer.is_valid():
+                user = serializer.save()
+                data['user'] = user.id
+            else:
+                return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+            
         elif isinstance(user_data, int):
             user_id = user_data
             user = User.objects.filter(pk=user_id).first()
-        vol = Volunteer.objects.filter(user=user, volunteering_year=volunteering_year).first()
-        if vol:
-            user_ = vol.user
-            user_.is_active=True
-            user_.save()
-            return Response("This volunteer already has a profile with the same volunteering year", status=status.HTTP_400_BAD_REQUEST)
+            if Volunteer.objects.filter(user=user, volunteering_year=volunteering_year):
+                return Response("This volunteer already has a profile with the same volunteering year", status=status.HTTP_400_BAD_REQUEST)
 
-        if not user:
-            return Response("User does not exist", status=status.HTTP_404_NOT_FOUND)
-        data['user'] = user.id
-
-
-        data['volunteering_year'] = volunteering_year.id
-        serializer = VolunteerCreateSerializer(data=data)
+            if not user:
+                return Response("User does not exist", status=status.HTTP_404_NOT_FOUND)
+            data['user'] = user.id
+        else:
+            return Response("Invalid data format", status=status.HTTP_400_BAD_REQUEST)
+            
+        serializer = VolunteerSerializer(data=data)
         if serializer.is_valid():
-            print('AAAAA', )
             serializer.save()
-            return Response(serializer.data, status=status.HTTP_201_CREATED)
+            return Response("Volunteer has been created", status=status.HTTP_201_CREATED)
         else:
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-    def delete(self, request, volunteer_id):
 
-        college = self.get_admins_college(request.user.id)
-        admin = CollegeAdmin.objects.filter(user = request.user.id).exists()
-        if not admin:
-            return Response('You are not authorized to perform this action', status=status.HTTP_403_FORBIDDEN)
-        
-        volunteer = Volunteer.objects.filter(pk=volunteer_id, course__college=college).first()
+    def delete(self, request, pk):
+        volunteer = Volunteer.objects.filter(pk=pk).first()
         if not volunteer:
-            return Response("Volunteer not exist", status=status.HTTP_404_NOT_FOUND)
-        volunteer.user.is_active = False
-        volunteer.user.save()
-        return Response("Volunteer has been deleted", status=status.HTTP_204_NO_CONTENT)
+            return Response("Volunteer does not exist", status=status.HTTP_404_NOT_FOUND)
         
+        volunteer.delete()
+        return Response("Volunteer deleted successfully", status=status.HTTP_204_NO_CONTENT)
+    
 
     def put(self, request, pk):
         volunteer = Volunteer.objects.filter(pk=pk).first()
@@ -279,18 +147,24 @@ class CollegeAPIView(APIView):
 
 
 class CoursesAPIView(APIView):
-    permission_classes = [IsAuthenticated]
-    def get_admins_college(self, user_id):
-        try:
-            return CollegeAdmin.objects.get(user_id=user_id).college
-        except CollegeAdmin.DoesNotExist:
-            return None
+    def get(self, request, college_id, course_id=None):
+        self.permission_classes = [IsAuthenticated]
+        self.check_permissions(request)
+        college = College.objects.filter(id=college_id).first()
+        if college:
+            if not course_id:
+                return Response("No courses available", status=status.HTTP_404_NOT_FOUND)
         
-    def get(self, request):
-        college = self.get_admins_college(request.user.id)
-        courses = CollegeCourses.objects.filter(college=college)
-        serializer = CollegeCoursesSerializer(courses, many=True)
-        return Response(serializer.data, status=status.HTTP_200_OK)
+            if course_id is None:   
+                courses = CollegeCourses.objects.all()
+                serializer = CollegeCoursesSerializer(courses, many=True)
+                return Response(serializer.data, status=status.HTTP_200_OK)
+            course = CollegeCourses.objects.filter(id=course_id).first()
+            if not course:
+                return Response("No courses available", status=status.HTTP_404_NOT_FOUND)
+            serializer = CollegeCoursesSerializer(course)
+            return Response(serializer.data, status=status.HTTP_200_OK)
+        return Response("College does not exist", status=status.HTTP_404_NOT_FOUND)      
 
     def post(self, request, college_id):
         self.permission_classes = [IsCollegeAdmin]
@@ -353,4 +227,5 @@ class CollegeAdminAPIView(APIView):
             serializer.save()
             return Response("College admin has been updated", status=status.HTTP_200_OK)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    
     
