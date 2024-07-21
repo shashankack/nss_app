@@ -1,8 +1,7 @@
 from django.db import models
 from django.utils import timezone
-from django.db.models.signals import pre_save
-from django.dispatch import receiver
 from nss_profile.models import Volunteer, College, User
+from nss_profile.models import NSSYear
 
 
 class Events(models.Model):
@@ -22,6 +21,7 @@ class Events(models.Model):
         db_table = 'Events'
 
     name = models.CharField(max_length=100)
+    volunteering_year = models.ForeignKey(NSSYear, on_delete=models.CASCADE)
     college = models.ForeignKey(College, on_delete=models.CASCADE)
     description = models.TextField()
     instructions = models.TextField()

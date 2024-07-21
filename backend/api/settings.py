@@ -40,9 +40,12 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    #Other apps
     'rest_framework',
     'corsheaders',
     'rest_framework_simplejwt',
+    'django_extensions',
+    #My apps
     'nss_profile',
     'nss_events',
 ]

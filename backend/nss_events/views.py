@@ -113,19 +113,27 @@ class LeaderboardAPIView(APIView):
     def get_college(self, user_id, volunteering_year):
         return Volunteer.objects.get(user_id=user_id, volunteering_year=volunteering_year)
     
+    def get_admin_college(self, user_id):
+        try:
+            return CollegeAdmin.objects.get(user_id=user_id).college
+        except CollegeAdmin.DoesNotExist:
+            return None
+    
     def get(self, request):
         volunteering_year = NSSYear.current_year()
-        college = self.get_college(request.user.id, volunteering_year).course.college
-        print('******',college)
+        college = self.get_admin_college(request.user.id)
+        if not college:
+            college = self.get_college(request.user.id, volunteering_year).course.college
+            
         volunteers_with_credits = Volunteer.objects.filter(
             volunteering_year=NSSYear.current_year(),
             user__is_active=True,
             course__college=college,
             ).annotate(
-                total_credits=Sum('attendance__event__credit_points'),
-                first_name=F('user__first_name'),
-                last_name=F('user__last_name'),
-                ).values('first_name', 'last_name', 'user_id', 'total_credits')
+            total_credits=Sum('attendance__event__credit_points'),
+            first_name=F('user__first_name'),
+            last_name=F('user__last_name'),
+            ).values('first_name', 'last_name', 'user_id', 'total_credits')
         sorted_volunteers = sorted(volunteers_with_credits, key=lambda x: x['total_credits'] or 0, reverse=True)
 
         ranked_volunteers = []
@@ -144,12 +152,23 @@ class ServiceHoursAPIView(APIView):
     permission_classes = [IsAuthenticated]
 
     def get_college(self, user_id, volunteering_year):
-        return Volunteer.objects.get(user_id=user_id, volunteering_year=volunteering_year)
+        try:
+            return Volunteer.objects.get(user_id=user_id, volunteering_year=volunteering_year)
+        except Volunteer.DoesNotExist:
+            return None
+        
+    def get_admin_college(self, user_id):
+        try:
+            return CollegeAdmin.objects.get(user_id=user_id).college
+        except CollegeAdmin.DoesNotExist:
+            return None
 
     def get(self, request):
         # Return total service hours for the selected college by multiplying number of attended volunteers with duration field in Event for completed events
         volunteering_year = NSSYear.current_year()
-        college = self.get_college(request.user.id, volunteering_year).course.college
+        college = self.get_admin_college(request.user.id)
+        if not college:
+            college = self.get_college(request.user.id, volunteering_year).course.college
         # completed_events = Events.objects.filter(college=college, status=Events.STATUS_COMPLETED)
 
         events_with_service_hours = Events.objects.filter(

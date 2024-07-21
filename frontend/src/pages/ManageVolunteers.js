@@ -24,7 +24,7 @@ const ManageVolunteers = () => {
       first_name: "",
       last_name: "",
       username: "",
-      password: "",
+      password: "pleaseresetme",
       email: "",
       blood_group: "",
       gender: ""
@@ -374,18 +374,6 @@ const ManageVolunteers = () => {
                 name="course_year"
                 value={newVolunteer.course_year}
                 onChange={(e) => setNewVolunteer({ ...newVolunteer, course_year: e.target.value })}
-              />
-            </Grid>
-            <Grid item xs={4}>
-              <TextField
-                margin="dense"
-                required
-                label="Password"
-                type="password"
-                fullWidth
-                name="password"
-                value={newVolunteer.user.password}
-                onChange={handleInputChange}
               />
             </Grid>
             <Grid item xs={4}>

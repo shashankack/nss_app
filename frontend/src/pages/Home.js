@@ -6,6 +6,7 @@ import EventIcon from '@mui/icons-material/Event';
 import PersonIcon from '@mui/icons-material/Person';
 import logo from "../assets/nss_logo.png";
 import api from '../utils/api';
+import EmojiEventsIcon from '@mui/icons-material/EmojiEvents';
 import Alert from '@mui/material/Alert';
 import CheckIcon from '@mui/icons-material/Check';
 
@@ -55,7 +56,7 @@ const HomePage = () => {
                 <HomeCard title="Manage Volunteers" tagline="Manage volunteers of your college." url="admin/manage-volunteers" icon={<Groups2Icon style={{ marginRight: 10, marginTop: '-0.5rem', fontSize: 60 }} />} />
                 <HomeCard title="Manage Events" tagline="Create and manage events." url="/events" icon={<EventIcon style={{ marginRight: 10, marginTop: '-0.5rem', fontSize: 60 }} />} />
                 <HomeCard title="My Profile" tagline="View and edit your profile." url="/profile" icon={<PersonIcon style={{ marginRight: 10, marginTop: '-0.5rem', fontSize: 60 }} />} />
-                <HomeCard title="Leaderboard" tagline="View the leaderboard." url="/leaderboard" />
+                <HomeCard title="Leaderboard" tagline="View the leaderboard." url="/leaderboard" icon={<EmojiEventsIcon style={{ marginRight: 10, marginTop: '-0.5rem', fontSize: 60 }} />}/>
             </Grid>
         </Container>
     );
@@ -65,7 +66,7 @@ const HomePage = () => {
             <Grid container spacing={6} justifyContent="center">
                 <HomeCard title="View Events" tagline="Upcoming and Completed Events." url="/events" icon={<EventIcon style={{ marginRight: 10, marginTop: '-0.5rem', fontSize: 60 }} />} />
                 <HomeCard title="My Profile" tagline="View and edit your profile." url="/profile" icon={<PersonIcon style={{ marginRight: 10, marginTop: '-0.5rem', fontSize: 60 }} />} />
-                <HomeCard title="Leaderboard" tagline="View the leaderboard." url="/leaderboard" />
+                <HomeCard title="Leaderboard" tagline="View the leaderboard." url="/leaderboard" icon={<EmojiEventsIcon style={{ marginRight: 10, marginTop: '-0.5rem', fontSize: 60 }} />} />
             </Grid>
         </Container>
     );
@@ -75,7 +76,7 @@ const HomePage = () => {
             <Grid container spacing={6} justifyContent="center">
                 <HomeCard title="Manage Events" tagline="Create and manage events." url="/events" icon={<EventIcon style={{ marginRight: 10, marginTop: '-0.5rem', fontSize: 60 }} />} />
                 <HomeCard title="My Profile" tagline="View and edit your profile." url="/profile" icon={<PersonIcon style={{ marginRight: 10, marginTop: '-0.5rem', fontSize: 60 }} />} />
-                <HomeCard title="Leaderboard" tagline="View the leaderboard." url="/leaderboard" />
+                <HomeCard title="Leaderboard" tagline="View the leaderboard." url="/leaderboard" icon={<EmojiEventsIcon style={{ marginRight: 10, marginTop: '-0.5rem', fontSize: 60 }} />}/>
             </Grid>
         </Container>
     );

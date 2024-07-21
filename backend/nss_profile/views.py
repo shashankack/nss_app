@@ -5,11 +5,15 @@ from .models import Volunteer, User, NSSYear
 from .serializers import *
 from rest_framework.permissions import IsAuthenticated
 from .permissions import *
-from nss_events.models import Attendance
+from nss_events.models import Attendance, Events
+from nss_events.views import EventsAttendedAPIView
 #APIViews to handle Volunteers
 
 
 class LoggedInUserAPIView(APIView):
+    def get_college(self, user_id, volunteering_year):
+        return Volunteer.objects.get(user_id=user_id, volunteering_year=volunteering_year).course.college
+
     def get(self, request):
         self.permission_classes = [IsAuthenticated]
         self.check_permissions(request)
@@ -19,14 +23,23 @@ class LoggedInUserAPIView(APIView):
             values = serializer.data
             values['role'] = 'Admin'
         else:
-            volunteer = Volunteer.objects.filter(user_id=request.user.id).first()
-            print(volunteer.user.first_name)
+            volunteering_year = NSSYear.current_year()
+            college = self.get_college(request.user.id, volunteering_year)
+            volunteer = Volunteer.objects.get(user_id=request.user.id)
             serializer = VolunteerSerializer(volunteer)
             values = serializer.data
             credits = Attendance.objects.filter(volunteer__user_id=request.user.id,
                                                 volunteer__role=volunteer.role,
                                                 volunteer__volunteering_year=NSSYear.current_year(),
                                                 ).select_related('event').values_list('event__credit_points', flat=True)
+            total_events = Events.objects.filter(status='Completed', volunteering_year=NSSYear.current_year(), college=college).count()
+            attended_events = Attendance.objects.filter(volunteer__user_id=request.user.id,
+                                                        event__volunteering_year=NSSYear.current_year(),
+                                                        ).count()
+            if total_events and attended_events:
+                values['attendance_percentage'] = (attended_events/total_events) * 100
+            else:
+                values['attendance_percentage'] = 0
             values['credits_earned'] = sum(list(credits))
         return Response(values, status=status.HTTP_200_OK)
     
@@ -34,7 +47,7 @@ class VolunteerAPIView(APIView):
     permission_classes = [IsAuthenticated]
 
     def get_college(self, user_id, volunteering_year):
-        return Volunteer.objects.get(user_id=user_id, volunteering_year=volunteering_year)
+        return Volunteer.objects.filter(user_id=user_id, volunteering_year=volunteering_year).first()
 
     def get(self, request):
         event_id = request.GET.get('event_id')
