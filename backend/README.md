@@ -81,3 +81,8 @@
 - GET:
 - PUT:  [isAdmin]
 - DELETE:   [isAdmin]
+
+
+### Creating Test Data
+- To create basic required data run this command in the nss_api container.
+`./manage.py dbshell < TestData.sql`
