@@ -48,9 +48,6 @@ class CollegeCourses(models.Model):
         (0, 'Inactive'),
         (1, 'Active'),
     ]
-    
-    class Meta:
-        db_table = 'CollegeCourses'
 
     college = models.ForeignKey(College, on_delete=models.CASCADE)
     course_name = models.CharField(max_length=50)
@@ -101,7 +98,7 @@ class Volunteer(models.Model):
 class CollegeAdmin(models.Model):
 
     class Meta:
-        db_table = 'CollegeAdmins'
+        db_table = 'CollegeAdmin'
      
     user = models.ForeignKey(User, on_delete=models.CASCADE)
     college  = models.ForeignKey(College, on_delete=models.CASCADE)
