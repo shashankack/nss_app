@@ -18,7 +18,9 @@ import {
   DialogContent,
   DialogActions,
   DialogContentText,
-  IconButton
+  IconButton,
+  Snackbar,
+  Alert
 } from '@mui/material';
 import EditIcon from '@mui/icons-material/Edit';
 import DeleteIcon from '@mui/icons-material/Delete';
@@ -27,6 +29,7 @@ import EditEventDialog from '../components/EditEventDialog';
 function EventListPage() {
   const navigate = useNavigate();
   const [openEvents, setOpenEvents] = useState([]);
+  const [inProgressEvents, setInProgressEvents] = useState([]); // New state for in-progress events
   const [completedEvents, setCompletedEvents] = useState([]);
   const [userRole, setUserRole] = useState('');
   const [loading, setLoading] = useState(true);
@@ -35,39 +38,61 @@ function EventListPage() {
   const [deleteDialog, setDeleteDialog] = useState(false);
   const [selectedEvent, setSelectedEvent] = useState(null);
   const [hoveredRow, setHoveredRow] = useState(null);
+  const [error, setError] = useState(null); // Error state
 
   const fetchUserRole = async () => {
-    const response = await api.get('/loggedinuser/');
-    return response.data.role;
+    try {
+      const response = await api.get('/loggedinuser/');
+      return response.data.role;
+    } catch (error) {
+      setError('Failed to fetch user role. Please try again later.');
+      throw error;
+    }
   };
 
   const fetchEvents = async (status) => {
-    return await api.get(`/event?status=${status}`);
+    try {
+      const response = await api.get(`/event?status=${status}`);
+      return response.data;
+    } catch (error) {
+      setError('Failed to fetch events. Please try again later.');
+      throw error;
+    }
   };
+
   const fetchAttendedEvents = async () => {
-    return await api.get('/volunteer/eventsAttended');
+    try {
+      const response = await api.get('/volunteer/events-attended');
+      return response.data;
+    } catch (error) {
+      throw error;
+    }
   };
 
   const fetchCompletedEvents = async (attendedE) => {
-    const completedData = await fetchEvents('Completed');
-    return completedData.data.map((event) => ({
-      ...event,
-      earned_points: attendedE.includes(event.id) ? event.credit_points : 0,
-    }));
+    try {
+      const completedData = await fetchEvents('Completed');
+      return completedData.map((event) => ({
+        ...event,
+        earned_points: attendedE.includes(event.id) ? event.credit_points : 0,
+      }));
+    } catch (error) {
+      setError('Failed to fetch completed events. Please try again later.');
+      throw error;
+    }
   };
-
 
   const fetchData = async () => {
     try {
       const openData = await fetchEvents('Open');
-      setOpenEvents(openData.data);
+      setOpenEvents(openData);
+      const inProgressData = await fetchEvents('In Progress'); // Fetch in-progress events
+      setInProgressEvents(inProgressData);
       const attendedData = await fetchAttendedEvents();
-      const completedData = await fetchCompletedEvents(attendedData.data);
+      const completedData = await fetchCompletedEvents(attendedData);
       setCompletedEvents(completedData);
-      console.log('Open', openEvents);
-      console.log('Completed', completedEvents);
     } catch (error) {
-      console.error('Failed to fetch events:', error);
+      console.error('Error fetching data:', error);
     } finally {
       setLoading(false);
     }
@@ -78,9 +103,9 @@ function EventListPage() {
       try {
         const role = await fetchUserRole();
         setUserRole(role);
-        fetchData();
+        await fetchData();
       } catch (error) {
-        console.error('Failed to fetch user role:', error);
+        console.error('Initialization error:', error);
       }
     };
 
@@ -126,11 +151,15 @@ function EventListPage() {
         await api.delete(`/event/${selectedEvent.id}/`);
         setOpenEvents(openEvents.filter((event) => event.id !== selectedEvent.id));
       } catch (error) {
-        console.error('Failed to delete event:', error);
+        setError('Failed to delete event. Please try again later.');
       } finally {
         handleCloseDeleteDialog();
       }
     }
+  };
+
+  const handleCloseSnackbar = () => {
+    setError(null);
   };
 
   return (
@@ -139,6 +168,7 @@ function EventListPage() {
         <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 2 }}>
           <Tabs value={currentTab} onChange={handleChangeTab}>
             <Tab label="Open Events" />
+            <Tab label="In Progress Events" /> {/* New tab */}
             <Tab label="Completed Events" />
           </Tabs>
           <Button variant="contained" color="primary" onClick={handleCreateEvent} hidden={userRole !== 'Leader'}>
@@ -147,19 +177,20 @@ function EventListPage() {
         </Box>
         <TableContainer sx={{ maxHeight: 'none' }}>
           <Table>
-          <TableHead sx={{ '& th': { backgroundColor: 'primary.main', color: 'white' } }}>
-            <TableRow sx={{ backgroundColor: '#B0BEC5', color: '#212121' }}>
-              <TableCell sx={{ padding: '16px', fontWeight: 'bold' }}>Name</TableCell>
-              <TableCell sx={{ padding: '16px', fontWeight: 'bold' }}>Start Date</TableCell>
-              <TableCell sx={{ padding: '16px', fontWeight: 'bold' }}>Start Time</TableCell>
-              <TableCell sx={{ padding: '16px', fontWeight: 'bold' }}>Location</TableCell>
-              <TableCell sx={{ padding: '16px', fontWeight: 'bold' }}>Credit Points</TableCell>
-              {currentTab === 0 && userRole === 'Leader' && <TableCell sx={{ padding: '16px', fontWeight: 'bold' }}>Actions</TableCell>}
-              {currentTab === 1 && <TableCell sx={{ padding: '16px', fontWeight: 'bold' }}>Earned Points</TableCell>}
-            </TableRow>
-          </TableHead>
+            <TableHead sx={{ '& th': { backgroundColor: 'primary.main', color: 'white' } }}>
+              <TableRow sx={{ backgroundColor: '#B0BEC5', color: '#212121' }}>
+                <TableCell sx={{ padding: '16px', fontWeight: 'bold' }}>Name</TableCell>
+                <TableCell sx={{ padding: '16px', fontWeight: 'bold' }}>Start Date</TableCell>
+                <TableCell sx={{ padding: '16px', fontWeight: 'bold' }}>Start Time</TableCell>
+                <TableCell sx={{ padding: '16px', fontWeight: 'bold' }}>Location</TableCell>
+                <TableCell sx={{ padding: '16px', fontWeight: 'bold' }}>Credit Points</TableCell>
+                {currentTab === 0 && userRole === 'Leader' && <TableCell sx={{ padding: '16px', fontWeight: 'bold' }}>Actions</TableCell>}
+                {currentTab === 1 && <TableCell sx={{ padding: '16px', fontWeight: 'bold' }}>Actions</TableCell>}
+                {currentTab === 2 && <TableCell sx={{ padding: '16px', fontWeight: 'bold' }}>Earned Points</TableCell>}
+              </TableRow>
+            </TableHead>
             <TableBody>
-              {(currentTab === 0 ? openEvents : completedEvents).map(event => (
+              {(currentTab === 0 ? openEvents : currentTab === 1 ? inProgressEvents : completedEvents).map(event => (
                 <TableRow
                   key={event.id}
                   onClick={() => handleRowClick(event.id)}
@@ -194,7 +225,23 @@ function EventListPage() {
                       </IconButton>
                     </TableCell>
                   )}
-                  {currentTab === 1 && <TableCell>{event.earned_points}</TableCell>}
+                  {currentTab === 1 && userRole === 'Leader' && (
+                    <TableCell>
+                      <IconButton
+                        color="primary"
+                        onClick={(e) => { e.stopPropagation(); handleEditEvent(event); }}
+                      >
+                        <EditIcon />
+                      </IconButton>
+                      <IconButton
+                        color="error"
+                        onClick={(e) => { e.stopPropagation(); handleDeleteEvent(event); }}
+                      >
+                        <DeleteIcon />
+                      </IconButton>
+                    </TableCell>
+                  )}
+                  {currentTab === 2 && <TableCell>{event.earned_points}</TableCell>}
                 </TableRow>
               ))}
             </TableBody>
@@ -219,6 +266,15 @@ function EventListPage() {
           <Button onClick={handleConfirmDelete} color="error">Delete</Button>
         </DialogActions>
       </Dialog>
+      <Snackbar
+        open={!!error}
+        autoHideDuration={6000}
+        onClose={handleCloseSnackbar}
+      >
+        <Alert onClose={handleCloseSnackbar} severity="error">
+          {error}
+        </Alert>
+      </Snackbar>
     </Box>
   );
 }

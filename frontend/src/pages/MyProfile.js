@@ -1,11 +1,35 @@
-import React, { useState } from 'react';
-import { Box, Button, Avatar, Typography, Grid, Paper, LinearProgress, Card, CardContent, CardHeader, Divider, Collapse } from '@mui/material';
+import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
+import {
+  Box,
+  Button,
+  Avatar,
+  Typography,
+  Grid,
+  Paper,
+  CircularProgress,
+  Card,
+  CardHeader,
+  Divider,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  List,
+  ListItem,
+  ListItemText,
+} from '@mui/material';
 import { EmojiEvents, School } from '@mui/icons-material';
+import api from '../utils/api';
 
 const MyProfile = () => {
   const [mouseX, setMouseX] = useState(0);
   const [mouseY, setMouseY] = useState(0);
-  const [openEvents, setOpenEvents] = useState(false);
+  const [openEventsDialog, setOpenEventsDialog] = useState(false);
+  const [attendedEvents, setAttendedEvents] = useState([]);
+  const [user, setUser] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const navigate = useNavigate();
 
   const handleMouseMove = (event) => {
     const rect = event.currentTarget.getBoundingClientRect();
@@ -17,112 +41,121 @@ const MyProfile = () => {
     return `${firstName[0]}${lastName[0]}`;
   };
 
-  // Static user data
-  const user = {
-    firstName: 'John',
-    lastName: 'Doe',
-    username: 'john.doe',
-    email: 'john.doe@example.com',
-    role: 'Volunteer',
-    totalCreditPoints: 150,
-    attendance: 95,
-    bloodGroup: 'O+',
-    gender: 'Male',
-    events: [
-      { title: 'Event 1', date: '2024-07-01', time: '10:00 AM', creditPoints: 10 },
-      { title: 'Event 2', date: '2024-07-10', time: '02:00 PM', creditPoints: 20 },
-      { title: 'Event 3', date: '2024-07-15', time: '11:00 AM', creditPoints: 15 },
-    ],
+  // Function to get details stored in the local storage from 'userData'
+  const getUserData = () => {
+    const userData = localStorage.getItem('userDetails');
+    if (userData) {
+      return JSON.parse(userData);
+    } else {
+      return null;
+    }
+  };
+
+  useEffect(() => {
+    // API call to get attended events
+    api.get('volunteer/events-attended/')
+      .then((response) => {
+        setAttendedEvents(response.data);
+      })
+      .catch((error) => {
+        console.log(error);
+      });
+
+    // Set user details from local storage
+    setUser(getUserData());
+  }, []);
+
+  const handleCloseEventsDialog = () => {
+    setOpenEventsDialog(false);
+  };
+
+  const handleOpenEventsDialog = () => {
+    setOpenEventsDialog(true);
+  };
+
+  const handleResetPassword = () => {
+    navigate('/reset-password');
   };
 
   return (
     <Box sx={{ display: 'flex', justifyContent: 'center', mt: 4 }}>
-      <Paper elevation={3} sx={{ padding: 4, maxWidth: 600, width: '100%' }}>
+      <Paper elevation={3} sx={{ padding: 4, maxWidth: 'md', width: '100%' }}>
         <Grid container spacing={2} alignItems="center">
           <Grid item xs={3}>
-            <Avatar sx={{ bgcolor: 'primary.main', width: 56, height: 56 }}>
-              {getInitials(user.firstName, user.lastName)}
+            <Avatar sx={{ bgcolor: 'primary.main', width: 170, height: 170, fontSize: 100 }}>
+              {user && getInitials(user.first_name, user.last_name)}
             </Avatar>
           </Grid>
           <Grid item xs={9}>
-            <Typography variant="h4" component="div">
-              {user.firstName} {user.lastName}
-            </Typography>
-            <Typography variant="subtitle1" color="textSecondary">@{user.username}</Typography>
-            <Typography variant="body1" color="textSecondary">{user.email}</Typography>
+            {user && (
+              <>
+                <Typography variant="h4" component="div">
+                  {user.first_name} {user.last_name}
+                </Typography>
+                <Typography variant="subtitle1" color="textSecondary">
+                  @{user.username}
+                </Typography>
+                <Typography variant="body1" color="textSecondary">
+                  {user.email}
+                </Typography>
+                <Divider sx={{ my: 2 }} />
+                <Typography variant="h6" component="div" gutterBottom>
+                  Profile Details
+                </Typography>
+                <Typography variant="body1" component="div" sx={{ mt: 1 }}>
+                  <strong>Role:</strong> {user.role}
+                </Typography>
+                <Typography variant="body1" component="div" sx={{ mt: 1 }}>
+                  <strong>Blood Group:</strong> {user.blood_group}
+                </Typography>
+                <Typography variant="body1" component="div" sx={{ mt: 1 }}>
+                  <strong>Gender:</strong> {user.gender}
+                </Typography>
+              </>
+            )}
             <Divider sx={{ my: 2 }} />
-            <Typography variant="h6" component="div" gutterBottom>Profile Details</Typography>
-            <Typography variant="body1" component="div" sx={{ mt: 1 }}>
-              <strong>Role:</strong> {user.role}
-            </Typography>
-            <Typography variant="body1" component="div" sx={{ mt: 1 }}>
-              <strong>Blood Group:</strong> {user.bloodGroup}
-            </Typography>
-            <Typography variant="body1" component="div" sx={{ mt: 1 }}>
-              <strong>Gender:</strong> {user.gender}
-            </Typography>
           </Grid>
-          <Grid item xs={12}>
-            <Divider sx={{ my: 2 }} />
-            <Card
-              sx={{
-                mb: 2,
-                '&:hover': {
-                  boxShadow: 6,
-                  backgroundColor: 'primary.light',
-                },
-              }}
-            >
+          <Grid item xs={6}>
+            <Card>
               <CardHeader
-                avatar={<EmojiEvents color="primary" />}
+                avatar={<EmojiEvents color="primary" sx={{ width: 40, height: 40 }} />}
                 title={<Typography variant="h6">Total Credit Points</Typography>}
-                subheader={<Typography variant="subtitle1">{user.totalCreditPoints}</Typography>}
+                subheader={<Typography variant="subtitle1">{user ? user.credits_earned : 0}</Typography>}
               />
             </Card>
+          </Grid>
+          <Grid item xs={6}>
             <Card
               sx={{
                 '&:hover': {
                   boxShadow: 6,
-                  backgroundColor: 'primary.light',
+                  backgroundColor: 'rbga(255, 255, 255, 1)',
                 },
+                cursor: 'pointer'
               }}
+              onClick={handleOpenEventsDialog}
             >
               <CardHeader
-                avatar={<School color="primary" />}
+                avatar={
+                  <Box position="relative" display="inline-flex">
+                    <CircularProgress
+                      variant="determinate"
+                      value={user ? user.attendance : 0}
+                      sx={{
+                        color: 'primary.main',
+                        position: 'absolute',
+                        top: 0,
+                        left: 0,
+                        zIndex: 1,
+                      }}
+                      size={40}
+                    />
+                    <School color="primary" sx={{ width: 40, height: 40 }} />
+                  </Box>
+                }
                 title={<Typography variant="h6">Attendance</Typography>}
-                subheader={<Typography variant="subtitle1">{user.attendance}%</Typography>}
+                subheader={<Typography variant="subtitle1 ">{user ? `${user.attendance_percentage}%` : '0%'}</Typography>}
               />
-              <CardContent>
-                <LinearProgress variant="determinate" value={user.attendance} />
-              </CardContent>
-              <Button
-                onClick={() => setOpenEvents(!openEvents)}
-                variant="contained"
-                color="primary"
-                sx={{ mt: 2 }}
-              >
-                {openEvents ? 'Hide Events' : 'Show Events'}
-              </Button>
-              <Collapse in={openEvents}>
-                <Box sx={{ mt: 2 }}>
-                  {user.events.map((event, index) => (
-                    <Card key={index} sx={{ mb: 2 }}>
-                      <CardContent>
-                        <Typography variant="h6">{event.title}</Typography>
-                        <Typography variant="body1">
-                          <strong>Date:</strong> {event.date}
-                        </Typography>
-                        <Typography variant="body1">
-                          <strong>Time:</strong> {event.time}
-                        </Typography>
-                        <Typography variant="body1">
-                          <strong>Credit Points:</strong> {event.creditPoints}
-                        </Typography>
-                      </CardContent>
-                    </Card>
-                  ))}
-                </Box>
-              </Collapse>
             </Card>
           </Grid>
           <Grid item xs={12}>
@@ -165,7 +198,8 @@ const MyProfile = () => {
                 }}
                 onMouseMove={handleMouseMove}
                 variant="outlined"
-                color="secondary"
+                color="error"
+                onClick={handleResetPassword}
               >
                 Reset Password
               </Button>
@@ -173,6 +207,38 @@ const MyProfile = () => {
           </Grid>
         </Grid>
       </Paper>
+      <Dialog open={openEventsDialog} onClose={handleCloseEventsDialog} fullWidth maxWidth="sm">
+        <DialogTitle sx={{ textDecoration: 'underline' }} >Events Attended</DialogTitle>
+        <DialogContent>
+          <List>
+            {attendedEvents.length > 0 ? (
+              attendedEvents.map((event, index) => (
+                <ListItem key={index} disablePadding>
+                  <ListItemText
+                    primary={event.name}
+                    secondary={
+                      <>
+                        <Typography variant="body2" color="textSecondary">
+                          {new Date(event.date).toLocaleDateString()} - Credits: {event.credits}
+                        </Typography>
+                      </>
+                    }
+                  />
+                </ListItem>
+              ))
+            ) : (
+              <Typography variant="body1" color="text.secondary" sx={{ textAlign: 'center' }}>
+                No events attended
+              </Typography>
+            )}
+          </List>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={handleCloseEventsDialog} color="primary">
+            Close
+          </Button>
+        </DialogActions>
+      </Dialog>
     </Box>
   );
 };
