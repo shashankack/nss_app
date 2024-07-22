@@ -10,12 +10,14 @@ import {
     Alert
 } from '@mui/material';
 import api from '../utils/api';
+import { useNavigate } from 'react-router-dom';
 
 const ResetPassword = () => {
     const [newPassword, setNewPassword] = useState('');
     const [confirmPassword, setConfirmPassword] = useState('');
     const [error, setError] = useState('');
     const [success, setSuccess] = useState(false);
+    const nav = useNavigate();
 
     const handleSubmit = (e) => {
         e.preventDefault();
@@ -27,6 +29,9 @@ const ResetPassword = () => {
             api.post('/password-reset/', {'password': newPassword})
             .then((response) => {
               setSuccess(true);
+              setTimeout(() => {
+                nav(-1); // Navigate to the previous page after 2 seconds
+            }, 2000);
               
             })
             .catch((error) => {
@@ -42,8 +47,7 @@ const ResetPassword = () => {
                 display: 'flex',
                 justifyContent: 'center',
                 alignItems: 'center',
-                height: '100vh',
-                backgroundColor: '#f0f0f0'
+                marginTop: 30
             }}
         >
             <Paper sx={{ padding: 4, width: '400px' }}>

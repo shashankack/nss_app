@@ -29,6 +29,7 @@ class EventAPIView(APIView):
     def post(self, request):        
         data = request.data
         data['college'] = Volunteer.objects.get(user_id=request.user.id).course.college.id
+        data['volunteering_year'] = NSSYear.current_year().id
         serializer = EventSerializer(data=request.data)
         if serializer.is_valid():
             serializer.save()
