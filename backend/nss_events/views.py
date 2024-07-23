@@ -12,23 +12,37 @@ from nss_profile.models import Volunteer, NSSYear, CollegeAdmin
 
 class EventAPIView(APIView):
     permission_classes = [IsAuthenticated]
+    def get_admin_college(self, user_id):
+        try:
+            return CollegeAdmin.objects.get(user_id=user_id).college
+        except CollegeAdmin.DoesNotExist:
+            return None
+        
+    def get_college(self, user_id):
+        college = self.get_admin_college(user_id)
+        if not college:
+            college = Volunteer.objects.get(user_id=user_id).course.college.id
+        return college
+    
     def get(self, request, event_id=None):
+        college = self.get_college(request.user.id)
         event_status = request.GET.get('status')
         if event_id is not None:
-            event = Events.objects.filter(id=event_id).first()
+            event = Events.objects.filter(id=event_id, college=college).first()
             if not event:
                 return Response("Event does not exist", status=status.HTTP_404_NOT_FOUND)
             
             serializer = EventSerializer(event)
             return Response(serializer.data, status=status.HTTP_200_OK)
         else:
-            events = Events.objects.filter(status=event_status)
+            events = Events.objects.filter(status=event_status, college=college)
             serializer = EventSerializer(events, many=True)
             return Response(serializer.data, status=status.HTTP_200_OK)
     
-    def post(self, request):        
+    def post(self, request):
+        college = self.get_college(request.user.id)
         data = request.data
-        data['college'] = Volunteer.objects.get(user_id=request.user.id).course.college.id
+        data['college'] = college.id
         data['volunteering_year'] = NSSYear.current_year().id
         serializer = EventSerializer(data=request.data)
         if serializer.is_valid():
@@ -37,7 +51,8 @@ class EventAPIView(APIView):
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
     
     def put(self, request, event_id):
-        event = Events.objects.filter(id=event_id).first()
+        college = self.get_college(request.user.id)
+        event = Events.objects.filter(id=event_id, college=college).first()
         serializer = EventSerializer(event, data=request.data, partial=True)
         if serializer.is_valid():
             serializer.save()
@@ -45,7 +60,8 @@ class EventAPIView(APIView):
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
     
     def delete(self, request, event_id):
-        event = Events.objects.filter(id=event_id).first()
+        college = self.get_college(request.user.id)
+        event = Events.objects.filter(id=event_id, college=college).first()
         if not event:
             return Response('Event does not exist', status=status.HTTP_404_NOT_FOUND)
         event.status = event.STATUS_DELETED

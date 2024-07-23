@@ -121,6 +121,7 @@ const MyProfile = () => {
                 avatar={<EmojiEvents color="primary" sx={{ width: 40, height: 40 }} />}
                 title={<Typography variant="h6">Total Credit Points</Typography>}
                 subheader={<Typography variant="subtitle1">{user ? user.credits_earned : 0}</Typography>}
+                hidden={!user || user.role === "Admin"}
               />
             </Card>
           </Grid>
@@ -134,6 +135,7 @@ const MyProfile = () => {
                 cursor: 'pointer'
               }}
               onClick={handleOpenEventsDialog}
+              hidden={!user || user.role === "Admin"}
             >
               <CardHeader
                 avatar={
@@ -160,27 +162,7 @@ const MyProfile = () => {
           </Grid>
           <Grid item xs={12}>
             <Box sx={{ display: 'flex', justifyContent: 'space-between', mt: 2 }}>
-              <Button
-                sx={{
-                  position: 'relative',
-                  overflow: 'hidden',
-                  '&:hover::before': {
-                    content: '""',
-                    position: 'absolute',
-                    top: 0,
-                    left: 0,
-                    width: '100%',
-                    height: '100%',
-                    background: `radial-gradient(circle at ${mouseX}px ${mouseY}px, rgba(0, 123, 255, 0.6), transparent)`,
-                    pointerEvents: 'none',
-                  },
-                }}
-                onMouseMove={handleMouseMove}
-                variant="outlined"
-                color="primary"
-              >
-                Edit Details
-              </Button>
+              
               <Button
                 sx={{
                   position: 'relative',

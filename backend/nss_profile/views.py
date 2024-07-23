@@ -22,6 +22,8 @@ class LoggedInUserAPIView(APIView):
             serializer = CollegeAdminSerializer(admin)
             values = serializer.data
             values['role'] = 'Admin'
+            values['blood_group'] = request.user.blood_group
+            values['gender'] = request.user.gender
         else:
             volunteering_year = NSSYear.current_year()
             college = self.get_college(request.user.id, volunteering_year)
@@ -32,10 +34,9 @@ class LoggedInUserAPIView(APIView):
                                                 volunteer__role=volunteer.role,
                                                 volunteer__volunteering_year=NSSYear.current_year(),
                                                 ).select_related('event').values_list('event__credit_points', flat=True)
-            total_events = Events.objects.filter(status='Completed', volunteering_year=NSSYear.current_year(), college=college).count()
-            attended_events = Attendance.objects.filter(volunteer__user_id=request.user.id,
-                                                        event__volunteering_year=NSSYear.current_year(),
-                                                        ).count()
+            total_events = Events.objects.filter(status__in=[Events.STATUS_ONGOING, Events.STATUS_COMPLETED], volunteering_year=NSSYear.current_year(), college=college)
+            attended_events = Attendance.objects.filter(volunteer__user_id=request.user.id, event__in=total_events).count()
+            total_events = total_events.count()
             if total_events and attended_events:
                 values['attendance_percentage'] = (attended_events/total_events) * 100
             else:

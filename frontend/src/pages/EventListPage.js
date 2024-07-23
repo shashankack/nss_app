@@ -171,7 +171,7 @@ function EventListPage() {
             <Tab label="In Progress Events" /> {/* New tab */}
             <Tab label="Completed Events" />
           </Tabs>
-          <Button variant="contained" color="primary" onClick={handleCreateEvent} hidden={userRole !== 'Leader'}>
+          <Button variant="contained" color="primary" onClick={handleCreateEvent} hidden={userRole === 'Volunteer'}>
             Create Event
           </Button>
         </Box>
@@ -184,7 +184,7 @@ function EventListPage() {
                 <TableCell sx={{ padding: '16px', fontWeight: 'bold' }}>Start Time</TableCell>
                 <TableCell sx={{ padding: '16px', fontWeight: 'bold' }}>Location</TableCell>
                 <TableCell sx={{ padding: '16px', fontWeight: 'bold' }}>Credit Points</TableCell>
-                {currentTab === 0 && userRole === 'Leader' && <TableCell sx={{ padding: '16px', fontWeight: 'bold' }}>Actions</TableCell>}
+                {currentTab === 0 && userRole != 'Volunteer' && <TableCell sx={{ padding: '16px', fontWeight: 'bold' }}>Actions</TableCell>}
                 {currentTab === 1 && <TableCell sx={{ padding: '16px', fontWeight: 'bold' }}>Actions</TableCell>}
                 {currentTab === 2 && <TableCell sx={{ padding: '16px', fontWeight: 'bold' }}>Earned Points</TableCell>}
               </TableRow>
@@ -209,7 +209,7 @@ function EventListPage() {
                   <TableCell>{new Date(event.start_datetime).toLocaleTimeString()}</TableCell>
                   <TableCell>{event.location}</TableCell>
                   <TableCell>{event.credit_points}</TableCell>
-                  {currentTab === 0 && userRole === 'Leader' && (
+                  {currentTab === 0 && userRole != 'Volunteer' && (
                     <TableCell>
                       <IconButton
                         color="primary"
@@ -225,7 +225,7 @@ function EventListPage() {
                       </IconButton>
                     </TableCell>
                   )}
-                  {currentTab === 1 && userRole === 'Leader' && (
+                  {currentTab === 1 && userRole != 'Volunteer' && (
                     <TableCell>
                       <IconButton
                         color="primary"

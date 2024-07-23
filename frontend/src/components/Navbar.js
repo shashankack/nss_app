@@ -9,11 +9,15 @@ import Avatar from '@mui/material/Avatar';
 import Tooltip from '@mui/material/Tooltip';
 import MenuItem from '@mui/material/MenuItem';
 import { useLocation, useNavigate } from 'react-router-dom';
-import api from '../utils/api';
 import { clearTokens } from '../utils/auth';
+import api from '../utils/api';
+import { useState } from 'react';
 import Badge from '@mui/material/Badge';
 import logo from '../assets/nss_logo.png';
 import AutoAwesomeIcon from '@mui/icons-material/AutoAwesome';
+import MenuIcon from '@mui/icons-material/Menu';
+import CloseIcon from '@mui/icons-material/Close';
+import {Drawer, Divider, List, ListItemText, ListItem} from '@mui/material';
 
 function ResponsiveAppBar() {
   const location = useLocation();
@@ -22,6 +26,7 @@ function ResponsiveAppBar() {
   
   const [anchorElUser, setAnchorElUser] = React.useState(null);
   const [userProfile, setUserProfile] = React.useState({});
+  const [open, setOpen] = useState(false);
 
 
   React.useEffect(() => {
@@ -41,11 +46,19 @@ function ResponsiveAppBar() {
     setAnchorElUser(event.currentTarget);
   };
 
+  const handleDrawerClose = () => {
+    setOpen(false);
+  };
+
   const handleLogout = () => {
     clearTokens();
     handleCloseUserMenu();
     nav("/login");
     
+  };
+
+  const handleDrawerOpen = () => {
+    setOpen(true);
   };
 
   const handleCloseUserMenu = () => {
@@ -57,6 +70,41 @@ function ResponsiveAppBar() {
       <AppBar position="sticky" sx={{ height: 70 }}>
         <Toolbar sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
           <Box display="flex" alignItems="center">
+          <IconButton edge="start" color="inherit" aria-label="menu" onClick={handleDrawerOpen}>
+            <MenuIcon />
+          </IconButton>
+          <Drawer
+        anchor="left"
+        open={open}
+        onClose={handleDrawerClose}
+        variant="persistent"
+        sx={{
+          width: 240,
+          flexShrink: 0,
+          '& .MuiDrawer-paper': {
+            width: 240,
+            boxSizing: 'border-box',
+          },
+        }}
+      >
+        <div>
+          <IconButton onClick={handleDrawerClose}>
+            <CloseIcon />
+          </IconButton>
+        </div>
+        <Divider />
+        <List>
+          <ListItem button>
+            <ListItemText primary="Home" />
+          </ListItem>
+          <ListItem button>
+            <ListItemText primary="About" />
+          </ListItem>
+          <ListItem button>
+            <ListItemText primary="Contact" />
+          </ListItem>
+        </List>
+      </Drawer>
             <IconButton edge="start" color="inherit" onClick={() => nav("/")}>
               <Avatar src={logo} alt="NSS" variant="square" sx={{ width: 60, height: 60 }} />
             </IconButton>
