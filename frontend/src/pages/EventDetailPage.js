@@ -15,6 +15,7 @@ import {
 import api from '../utils/api';
 import ImageCarousel from '../components/ImageCarousel';
 import { format } from 'date-fns';
+import { useNavigate } from 'react-router-dom';
 
 const EventDetails = () => {
   const { id } = useParams();
@@ -27,6 +28,7 @@ const EventDetails = () => {
   const [open, setOpen] = useState(false);
   const [selectedVolunteers, setSelectedVolunteers] = useState([]);
   const [search, setSearch] = useState('');
+  const nav = useNavigate();
 
   const fetchAttendedVolunteers = async () => {
     try {
@@ -36,6 +38,10 @@ const EventDetails = () => {
       console.error("Failed to fetch attended volunteers:", error);
     }
   };
+
+  const goBack = () => {
+    nav(-1);
+  }
 
   const fetchVolunteers = async () => {
     try {
@@ -160,7 +166,15 @@ const EventDetails = () => {
           <Typography variant="subtitle1" color="primary">
             Credit Points: {event.credit_points} | Status: {status}
           </Typography>
-          {userDetails.role === 'Leader' && (
+          <Button
+              sx={{ ml: 210 }}
+              variant="contained"
+              onClick={goBack}
+              
+            >
+              Go Back
+            </Button>
+          {userDetails.role != 'Volunteer' && (
             <Button
               variant="contained"
               onClick={handleStatusChange}
@@ -239,7 +253,7 @@ const EventDetails = () => {
             </Box>
           ))}
         </Box>
-        <TextField
+        { event.status != "Completed" && <TextField
           autoComplete="off"
           label="Add a comment"
           variant="outlined"
@@ -247,7 +261,7 @@ const EventDetails = () => {
           onChange={(e) => setNewComment(e.target.value)}
           onKeyPress={handleCommentSubmit}
           fullWidth
-        />
+        />}
       </Box>
 
       <Box
@@ -270,7 +284,7 @@ const EventDetails = () => {
         
         <Box sx={{ height: '70%', overflowY: 'auto', padding: 5 }}>
           {attendedVolunteers.length === 0 ? (
-            <Typography>No volunteers attended.</Typography>
+            <Typography>Attendance is not marked yet.</Typography>
           ) : (
             attendedVolunteers.map((volunteer) => (
               <Paper
@@ -304,7 +318,7 @@ const EventDetails = () => {
           )}
         </Box>
         <Box sx={{ ml: 65, mt: 12 }}>
-          {status === 'In Progress' && userDetails.role === 'Leader' ? (
+          {status === 'In Progress' && userDetails.role != 'Volunteer' ? (
             <Button variant="contained" onClick={handleOpen} disabled={false}>
               Mark Attendance
             </Button>

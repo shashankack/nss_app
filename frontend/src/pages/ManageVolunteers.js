@@ -2,13 +2,14 @@ import React, { useEffect, useState } from 'react';
 import {
   Container, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper, Button,
   Dialog, DialogActions, DialogContent, DialogTitle, TextField, MenuItem, Box, IconButton, Grid,
-  RadioGroup, FormControlLabel, Radio, Select, InputLabel, FormControl, FormLabel, Typography, Toolbar
+  RadioGroup, FormControlLabel, Radio, Select, InputLabel, FormControl, FormLabel, Typography, Tooltip,
+  Zoom
 } from '@mui/material';
 import DeleteIcon from '@mui/icons-material/Delete';
 import api from '../utils/api';
 import VolunteerUploadPopup from './VolunteerUploadPopup'
 import { useNavigate } from 'react-router-dom';
-import Papa from 'papaparse'; // Import PapaParse for CSV parsing
+import Papa from 'papaparse';
 
 const ManageVolunteers = () => {
   const [volunteers, setVolunteers] = useState([]);
@@ -33,22 +34,58 @@ const ManageVolunteers = () => {
     course_year: "",
     role: "Volunteer"
   });
+  const [errors, setErrors] = useState({
+    first_name: "",
+    last_name: "",
+    username: "",
+    email: "",
+    blood_group: "",
+    gender: "",
+    course: "",
+    course_year: ""
+  });
+
+  const resetForm = () => {
+    setNewVolunteer({
+      user: {
+        first_name: "",
+        last_name: "",
+        username: "",
+        password: "pleaseresetme",
+        email: "",
+        blood_group: "",
+        gender: ""
+      },
+      course: "",
+      course_year: "",
+      role: "Volunteer"
+    });
+    setErrors({
+      first_name: "",
+      last_name: "",
+      username: "",
+      email: "",
+      blood_group: "",
+      gender: "",
+      course: "",
+      course_year: ""
+    });
+  };
 
   const handleFileUpload = (event) => {
     const file = event.target.files[0];
     const reader = new FileReader();
-  
+
     reader.onload = (e) => {
       const csv = e.target.result;
       const lines = csv.split('\n');
       const headers = lines[0].split(',');
-      
+
       const jsonData = [];
-  
+
       for (let i = 1; i < lines.length; i++) {
         const data = lines[i].split(',');
         if (data.length === headers.length) {
-          
           let obj = {};
           let user_id = data[0].trim();
           if (user_id){
@@ -70,18 +107,18 @@ const ManageVolunteers = () => {
           jsonData.push(obj);
         }
       }
-  
+
       api.post('/admin/volunteers/upload/', jsonData)
-      .then((response) => {
-        setVolunteerPopupdata(response.data)
-        setUploadPopupOpen(true);
-        
-      })
-      .catch((error) => {
-        console.error();
-      })
+        .then((response) => {
+          setVolunteerPopupdata(response.data)
+          setUploadPopupOpen(true);
+
+        })
+        .catch((error) => {
+          console.error();
+        })
     };
-  
+
     reader.readAsText(file);
   };
 
@@ -120,6 +157,57 @@ const ManageVolunteers = () => {
     }
   }, [searchQuery, volunteers]);
 
+  const validateForm = () => {
+    let isValid = true;
+    const newErrors = {};
+
+    if (!newVolunteer.user.first_name) {
+      newErrors.first_name = "First name is required";
+      isValid = false;
+    }
+
+    if (!newVolunteer.user.last_name) {
+      newErrors.last_name = "Last name is required";
+      isValid = false;
+    }
+
+    if (!newVolunteer.user.username) {
+      newErrors.username = "Username is required";
+      isValid = false;
+    }
+
+    if (!newVolunteer.user.email) {
+      newErrors.email = "Email is required";
+      isValid = false;
+    } else if (!/\S+@\S+\.\S+/.test(newVolunteer.user.email)) {
+      newErrors.email = "Email is invalid";
+      isValid = false;
+    }
+
+    if (!newVolunteer.user.blood_group) {
+      newErrors.blood_group = <Typography style={{ color: "#d32f2f", fontSize: "0.75rem" }}>Blood Group is required</Typography>;
+      isValid = false;
+    }
+
+    if (!newVolunteer.user.gender) {
+      newErrors.gender = <Typography style={{ color: "#d32f2f", fontSize: "0.75rem" }}>Gender is required</Typography>;
+      isValid = false;
+    }
+
+    if (!newVolunteer.course) {
+      newErrors.course = <Typography style={{ color: "#d32f2f", fontSize: "0.75rem" }}>Course is required</Typography>;
+      isValid = false;
+    }
+
+    if (!newVolunteer.course_year) {
+      newErrors.course_year = "Course year is required";
+      isValid = false;
+    }
+
+    setErrors(newErrors);
+    return isValid;
+  };
+
   const handleInputChange = (e) => {
     const { name, value } = e.target;
     setNewVolunteer((prev) => ({
@@ -129,6 +217,7 @@ const ManageVolunteers = () => {
         [name]: value
       }
     }));
+    validateForm();
   };
 
   const handleRoleChange = (e) => {
@@ -136,6 +225,7 @@ const ManageVolunteers = () => {
       ...prev,
       role: e.target.value
     }));
+    validateForm();
   };
 
   const handleGenderChange = (e) => {
@@ -146,6 +236,7 @@ const ManageVolunteers = () => {
         gender: e.target.value
       }
     }));
+    validateForm();
   };
 
   const handleOpen = () => {
@@ -153,6 +244,7 @@ const ManageVolunteers = () => {
   };
 
   const handleClose = () => {
+    resetForm();
     setOpen(false);
   };
 
@@ -161,6 +253,10 @@ const ManageVolunteers = () => {
   };
 
   const handleSubmit = () => {
+    if (!validateForm()) {
+      return;
+    }
+
     api.post('/admin/volunteers/', newVolunteer)
       .then((response) => {
         setVolunteers([...volunteers, response.data]);
@@ -189,28 +285,25 @@ const ManageVolunteers = () => {
     fetchVolunteers();
   }
 
- 
-
   return (
     <Container>
-      <Box style={{ display: 'flex',alignItems: 'center', marginTop: '10em' }}>
-        <Toolbar>Volunteers</Toolbar>
-
-        <Button variant="contained" color="primary" onClick={handleOpen} style={{ margin:'30px'}}>Add New</Button>
-
-          <input
-            accept=".csv"
-            style={{ display: 'none'}}
-            id="contained-button-file"  
-            type="file"
-            onChange={handleFileUpload}
-          />
-          <label htmlFor="contained-button-file"> 
-            <Button variant="contained" component="span" style={{ margin:'30px'}}>Upload</Button>
-          </label>
-
-
-
+      <Box style={{ display: 'flex', alignItems: 'center', marginTop: '6em' }}>
+        <Typography variant="h4">Manage Volunteers</Typography>
+        <Tooltip title="Add a new volunteer" TransitionComponent={Zoom} followCursor={true}>
+        <Button variant="contained" color="primary" onClick={handleOpen} style={{ marginLeft: "40em" }}>Add New</Button>
+        </Tooltip>
+        <input
+          accept=".csv"
+          style={{ display: 'none' }}
+          id="contained-button-file"
+          type="file"
+          onChange={handleFileUpload}
+        />
+        <label htmlFor="contained-button-file">
+        <Tooltip title="Upload a .csv file" TransitionComponent={Zoom} followCursor={true}>
+          <Button variant="contained" component="span" style={{ marginLeft: '30px' }}>Upload</Button>
+        </Tooltip>
+        </label>
       </Box>
       <TableContainer
         component={Paper}
@@ -269,6 +362,11 @@ const ManageVolunteers = () => {
                 name="first_name"
                 value={newVolunteer.user.first_name}
                 onChange={handleInputChange}
+                error={Boolean(errors.first_name)}
+                helperText={errors.first_name}
+                InputProps={{
+                  style: { borderColor: errors.first_name ? 'red' : '' }
+                }}
               />
             </Grid>
             <Grid item xs={6}>
@@ -281,10 +379,15 @@ const ManageVolunteers = () => {
                 name="last_name"
                 value={newVolunteer.user.last_name}
                 onChange={handleInputChange}
+                error={Boolean(errors.last_name)}
+                helperText={errors.last_name}
+                InputProps={{
+                  style: { borderColor: errors.last_name ? 'red' : '' }
+                }}
               />
             </Grid>
             {/* Username and Email */}
-            <Grid item xs={6}>
+            <Grid item xs={4}>
               <TextField
                 margin="dense"
                 required
@@ -294,44 +397,16 @@ const ManageVolunteers = () => {
                 name="username"
                 value={newVolunteer.user.username}
                 onChange={handleInputChange}
+                error={Boolean(errors.username)}
+                helperText={errors.username}
+                InputProps={{
+                  style: { borderColor: errors.username ? 'red' : '' }
+                }}
               />
             </Grid>
-            <Grid item xs={6}>
-              <TextField
-                margin="dense"
-                label="Email"
-                type="email"
-                required
-                fullWidth
-                name="email"
-                value={newVolunteer.user.email}
-                onChange={handleInputChange}
-              />
-            </Grid>
-            {/* Blood Group, Gender, and Course */}
             <Grid item xs={4}>
-              <FormControl fullWidth margin="dense">
-                <InputLabel>Blood Group</InputLabel>
-                <Select
-                  name="blood_group"
-                  required
-                  value={newVolunteer.user.blood_group}
-                  onChange={handleInputChange}
-                >
-                  <MenuItem value="A+">A+</MenuItem>
-                  <MenuItem value="A-">A-</MenuItem>
-                  <MenuItem value="B+">B+</MenuItem>
-                  <MenuItem value="B-">B-</MenuItem>
-                  <MenuItem value="O+">O+</MenuItem>
-                  <MenuItem value="O-">O-</MenuItem>
-                  <MenuItem value="AB+">AB+</MenuItem>
-                  <MenuItem value="AB-">AB-</MenuItem>
-                </Select>
-              </FormControl>
-            </Grid>
-            <Grid item xs={4}>
-              <FormControl component="fieldset" margin="dense">
-              <FormLabel id="gender-radio-group">Gender</FormLabel>
+              <FormControl component="fieldset" margin="dense" error={Boolean(errors.gender)}>
+                <FormLabel id="gender-radio-group">Gender</FormLabel>
                 <RadioGroup
                   aria-labelledby="gender-radio-group"
                   row
@@ -344,16 +419,58 @@ const ManageVolunteers = () => {
                   <FormControlLabel value="F" control={<Radio />} label="Female" />
                   <FormControlLabel value="O" control={<Radio />} label="Other" />
                 </RadioGroup>
+                {errors.gender && <Typography color="error">{errors.gender}</Typography>}
               </FormControl>
             </Grid>
             <Grid item xs={4}>
-              <FormControl fullWidth margin="dense">
+              <TextField
+                margin="dense"
+                label="Email"
+                type="email"
+                required
+                fullWidth
+                name="email"
+                value={newVolunteer.user.email}
+                onChange={handleInputChange}
+                error={Boolean(errors.email)}
+                helperText={errors.email}
+                InputProps={{
+                  style: { borderColor: errors.email ? 'red' : '' }
+                }}
+              />
+            </Grid>
+            {/* Blood Group, Gender, and Course */}
+            <Grid item xs={6}>
+              <FormControl fullWidth margin="dense" error={Boolean(errors.blood_group)}>
+                <InputLabel>Blood Group</InputLabel>
+                <Select
+                  name="blood_group"
+                  required
+                  value={newVolunteer.user.blood_group}
+                  onChange={handleInputChange}
+                  inputProps={{ 'aria-label': 'Blood Group' }}
+                >
+                  <MenuItem value="A+">A+</MenuItem>
+                  <MenuItem value="A-">A-</MenuItem>
+                  <MenuItem value="B+">B+</MenuItem>
+                  <MenuItem value="B-">B-</MenuItem>
+                  <MenuItem value="O+">O+</MenuItem>
+                  <MenuItem value="O-">O-</MenuItem>
+                  <MenuItem value="AB+">AB+</MenuItem>
+                  <MenuItem value="AB-">AB-</MenuItem>
+                </Select>
+                {errors.blood_group && <Typography color="error">{errors.blood_group}</Typography>}
+              </FormControl>
+            </Grid>
+            <Grid item xs={6}>
+              <FormControl fullWidth margin="dense" error={Boolean(errors.course)}>
                 <InputLabel>Course</InputLabel>
                 <Select
                   name="course"
                   required
                   value={newVolunteer.course}
                   onChange={(e) => setNewVolunteer({ ...newVolunteer, course: e.target.value })}
+                  inputProps={{ 'aria-label': 'Course' }}
                 >
                   {courses.map((course) => (
                     <MenuItem key={course.id} value={course.id}>
@@ -361,6 +478,7 @@ const ManageVolunteers = () => {
                     </MenuItem>
                   ))}
                 </Select>
+                {errors.course && <Typography color="error">{errors.course}</Typography>}
               </FormControl>
             </Grid>
             {/* Course Year, Volunteering Year, and Role */}
@@ -374,6 +492,11 @@ const ManageVolunteers = () => {
                 name="course_year"
                 value={newVolunteer.course_year}
                 onChange={(e) => setNewVolunteer({ ...newVolunteer, course_year: e.target.value })}
+                error={Boolean(errors.course_year)}
+                helperText={errors.course_year}
+                InputProps={{
+                  style: { borderColor: errors.course_year ? 'red' : '' }
+                }}
               />
             </Grid>
             <Grid item xs={4}>
@@ -381,6 +504,7 @@ const ManageVolunteers = () => {
                 <Select
                   value={newVolunteer.role}
                   onChange={handleRoleChange}
+                  inputProps={{ 'aria-label': 'Role' }}
                 >
                   <MenuItem value="Volunteer">Volunteer</MenuItem>
                   <MenuItem value="Leader">Leader</MenuItem>
@@ -389,7 +513,7 @@ const ManageVolunteers = () => {
             </Grid>
           </Grid>
         </DialogContent>
-              
+
         <DialogActions>
           <Button onClick={handleClose} color="primary">
             Cancel

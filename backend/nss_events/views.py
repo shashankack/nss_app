@@ -109,8 +109,24 @@ class AttendanceAPIView(APIView):
         return Response(f'Attendance marked for {volunteer_ids}', status=status.HTTP_201_CREATED)
     
     def delete(self, request, event_id):
-        # TODO : implement
-        pass
+        event = Events.objects.filter(id=event_id).first()
+        if not event:
+            return Response({'error':'Event does not exist'}, status=status.HTTP_404_NOT_FOUND)
+        
+        volunteer_ids = request.data.get('volunteer_ids')
+        if not volunteer_ids:
+            return Response({'error':'Volunteer ID\'s are required'}, status=status.HTTP_400_BAD_REQUEST)
+        
+        for volunteer_id in volunteer_ids:
+            volunteer = Volunteer.objects.filter(id=volunteer_id).first()
+            if not volunteer:
+                return Response({'error':f'Volunteer {volunteer_id} not found'}, status=status.HTTP_404_NOT_FOUND)
+            
+            attendance = Attendance.objects.filter(volunteer=volunteer, event=event).first()
+            if not attendance:
+                return Response({'error':f'Attendance for volunteer ({volunteer_id}) in the event ({event_id}) does not exist'}, status=status.HTTP_400_BAD_REQUEST)
+            attendance.delete()
+        return Response(f'Attendance deleted for {volunteer_ids}', status=status.HTTP_204_NO_CONTENT)
     
 class EventsAttendedAPIView(APIView):
     permission_classes = [IsAuthenticated]

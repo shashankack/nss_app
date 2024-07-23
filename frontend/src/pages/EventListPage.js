@@ -186,7 +186,7 @@ function EventListPage() {
                 <TableCell sx={{ padding: '16px', fontWeight: 'bold' }}>Credit Points</TableCell>
                 {currentTab === 0 && userRole != 'Volunteer' && <TableCell sx={{ padding: '16px', fontWeight: 'bold' }}>Actions</TableCell>}
                 {currentTab === 1 && <TableCell sx={{ padding: '16px', fontWeight: 'bold' }}>Actions</TableCell>}
-                {currentTab === 2 && <TableCell sx={{ padding: '16px', fontWeight: 'bold' }}>Earned Points</TableCell>}
+                {currentTab === 2 && userRole != 'Admin' && <TableCell sx={{ padding: '16px', fontWeight: 'bold' }}>Earned Points</TableCell>}
               </TableRow>
             </TableHead>
             <TableBody>
@@ -241,7 +241,7 @@ function EventListPage() {
                       </IconButton>
                     </TableCell>
                   )}
-                  {currentTab === 2 && <TableCell>{event.earned_points}</TableCell>}
+                  {currentTab === 2 && userRole != "Admin" && <TableCell>{event.earned_points}</TableCell>}
                 </TableRow>
               ))}
             </TableBody>

@@ -47,13 +47,22 @@ class LoggedInUserAPIView(APIView):
 class VolunteerAPIView(APIView):
     permission_classes = [IsAuthenticated]
 
+    def get_admin_college(self, user_id):
+        try:
+            return CollegeAdmin.objects.get(user_id=user_id).college
+        except CollegeAdmin.DoesNotExist:
+            return None
+
     def get_college(self, user_id, volunteering_year):
         return Volunteer.objects.filter(user_id=user_id, volunteering_year=volunteering_year).first()
 
     def get(self, request):
+        college = self.get_admin_college(request.user.id)
+        if not college:
+            college = self.get_college(request.user.id, volunteering_year)
+            
         event_id = request.GET.get('event_id')
         volunteering_year = NSSYear.current_year()
-        college = self.get_college(request.user.id, volunteering_year)
         attended_volunteers = Attendance.objects.filter(event_id=event_id).values_list('volunteer_id', flat=True)
         volunteers = Volunteer.objects.filter(course__college=college.id).exclude(id__in=attended_volunteers)
         serializer = VolunteerSerializer(volunteers, many=True)

@@ -1,19 +1,18 @@
 import React, { useEffect, useState } from 'react';
-import { Container, Grid, Card, CardContent, Typography, CardActionArea, Box } from '@mui/material';
+import { Container, Grid, Card, CardContent, Typography, CardActionArea, Box, Snackbar } from '@mui/material';
 import { useNavigate } from 'react-router-dom';
 import Groups2Icon from '@mui/icons-material/Groups2';
 import EventIcon from '@mui/icons-material/Event';
-import PersonIcon from '@mui/icons-material/Person';
 import logo from "../assets/nss_logo.png";
 import api from '../utils/api';
 import EmojiEventsIcon from '@mui/icons-material/EmojiEvents';
 import Alert from '@mui/material/Alert';
-import CheckIcon from '@mui/icons-material/Check';
 
 const HomePage = () => {
     const [userRole, setUserRole] = useState('');
     const [college, setCollege] = useState('');
     const [serviceHours, setServiceHours] = useState('');
+    const [openSnackbar, setOpenSnackbar] = useState(true);
     const nav = useNavigate();
 
     useEffect(() => {
@@ -55,7 +54,6 @@ const HomePage = () => {
             <Grid container spacing={6} justifyContent="center">
                 <HomeCard title="Manage Volunteers" tagline="Manage volunteers of your college." url="admin/manage-volunteers" icon={<Groups2Icon style={{ marginRight: 10, marginTop: '-0.5rem', fontSize: 60 }} />} />
                 <HomeCard title="Manage Events" tagline="Create and manage events." url="/events" icon={<EventIcon style={{ marginRight: 10, marginTop: '-0.5rem', fontSize: 60 }} />} />
-                <HomeCard title="My Profile" tagline="View and edit your profile." url="/profile" icon={<PersonIcon style={{ marginRight: 10, marginTop: '-0.5rem', fontSize: 60 }} />} />
                 <HomeCard title="Leaderboard" tagline="View the leaderboard." url="/leaderboard" icon={<EmojiEventsIcon style={{ marginRight: 10, marginTop: '-0.5rem', fontSize: 60 }} />}/>
             </Grid>
         </Container>
@@ -65,7 +63,6 @@ const HomePage = () => {
         <Container>
             <Grid container spacing={6} justifyContent="center">
                 <HomeCard title="View Events" tagline="Upcoming and Completed Events." url="/events" icon={<EventIcon style={{ marginRight: 10, marginTop: '-0.5rem', fontSize: 60 }} />} />
-                <HomeCard title="My Profile" tagline="View and edit your profile." url="/profile" icon={<PersonIcon style={{ marginRight: 10, marginTop: '-0.5rem', fontSize: 60 }} />} />
                 <HomeCard title="Leaderboard" tagline="View the leaderboard." url="/leaderboard" icon={<EmojiEventsIcon style={{ marginRight: 10, marginTop: '-0.5rem', fontSize: 60 }} />} />
             </Grid>
         </Container>
@@ -75,7 +72,6 @@ const HomePage = () => {
         <Container>
             <Grid container spacing={6} justifyContent="center">
                 <HomeCard title="Manage Events" tagline="Create and manage events." url="/events" icon={<EventIcon style={{ marginRight: 10, marginTop: '-0.5rem', fontSize: 60 }} />} />
-                <HomeCard title="My Profile" tagline="View and edit your profile." url="/profile" icon={<PersonIcon style={{ marginRight: 10, marginTop: '-0.5rem', fontSize: 60 }} />} />
                 <HomeCard title="Leaderboard" tagline="View the leaderboard." url="/leaderboard" icon={<EmojiEventsIcon style={{ marginRight: 10, marginTop: '-0.5rem', fontSize: 60 }} />}/>
             </Grid>
         </Container>
@@ -85,9 +81,28 @@ const HomePage = () => {
         <div>
             <img src={logo} alt="Image" style={{ display: 'block', margin: '5em auto', width: '18%' }} />
             {userRole === 'Admin' ? <AdminCards /> : userRole === 'Volunteer' ? <VolunteerCards /> : <LeaderCards />}
-            <Alert icon={<CheckIcon fontSize="inherit" />} severity="success">
-      Thank you for your service. Together {college} has contributed {serviceHours} hours of service to our community.
-            </Alert>
+            <div style={{
+              position: 'fixed',
+              bottom: 50,
+              left: 450,
+              right: 0,
+              backgroundColor: '#4caf50', // or use your theme's success color
+              color: '#fff',
+              display: 'flex',
+              alignItems: 'center',
+              textAlign: 'center',
+              width: 1000,
+              padding: '16px',
+              zIndex: 1200, // Ensure it appears above other content
+              boxShadow: '0px 2px 4px rgba(0, 0, 0, 0.2)', // Optional shadow
+              fontSize: '1rem',
+              fontWeight: 'bold',
+              borderRadius: '10px',
+            }}>
+              <Typography variant="body1">
+                Thank you for your service. Together {college} has contributed {serviceHours} hours of service to our community.
+              </Typography>
+            </div>
         </div>
     );
 };
