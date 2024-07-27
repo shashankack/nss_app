@@ -79,14 +79,14 @@ const HomePage = () => {
 
     return (
         <div>
+            <Box sx={{ display: 'flex' }}>
             <img src={logo} alt="Image" style={{ display: 'block', margin: '5em auto', width: '18%' }} />
-            {userRole === 'Admin' ? <AdminCards /> : userRole === 'Volunteer' ? <VolunteerCards /> : <LeaderCards />}
             <div style={{
-              position: 'fixed',
-              bottom: 50,
-              left: 450,
-              right: 0,
-              backgroundColor: '#4caf50', // or use your theme's success color
+                position: 'fixed',
+                bottom: 50,
+                left: 450,
+                right: 0,
+              backgroundColor: '#332965', // or use your theme's success color
               color: '#fff',
               display: 'flex',
               alignItems: 'center',
@@ -95,14 +95,16 @@ const HomePage = () => {
               padding: '16px',
               zIndex: 1200, // Ensure it appears above other content
               boxShadow: '0px 2px 4px rgba(0, 0, 0, 0.2)', // Optional shadow
-              fontSize: '1rem',
+              fontSize: '200px',
               fontWeight: 'bold',
               borderRadius: '10px',
             }}>
-              <Typography variant="body1">
+              <Typography variant="h6">
                 Thank you for your service. Together {college} has contributed {serviceHours} hours of service to our community.
               </Typography>
             </div>
+            </Box>
+            {userRole === 'Admin' ? <AdminCards /> : userRole === 'Volunteer' ? <VolunteerCards /> : <LeaderCards />}
         </div>
     );
 };

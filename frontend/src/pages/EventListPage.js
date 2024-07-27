@@ -29,7 +29,7 @@ import EditEventDialog from '../components/EditEventDialog';
 function EventListPage() {
   const navigate = useNavigate();
   const [openEvents, setOpenEvents] = useState([]);
-  const [inProgressEvents, setInProgressEvents] = useState([]); // New state for in-progress events
+  const [inProgressEvents, setInProgressEvents] = useState([]);
   const [completedEvents, setCompletedEvents] = useState([]);
   const [userRole, setUserRole] = useState('');
   const [loading, setLoading] = useState(true);
@@ -38,8 +38,9 @@ function EventListPage() {
   const [deleteDialog, setDeleteDialog] = useState(false);
   const [selectedEvent, setSelectedEvent] = useState(null);
   const [hoveredRow, setHoveredRow] = useState(null);
-  const [error, setError] = useState(null); // Error state
-
+  const [error, setError] = useState(null);
+  
+  
   const fetchUserRole = async () => {
     try {
       const response = await api.get('/loggedinuser/');
@@ -63,18 +64,18 @@ function EventListPage() {
   const fetchAttendedEvents = async () => {
     try {
       const response = await api.get('/volunteer/events-attended');
-      return response.data;
+      return response.data.map(event => event.id); // Return only event IDs
     } catch (error) {
       throw error;
     }
   };
 
-  const fetchCompletedEvents = async (attendedE) => {
+  const fetchCompletedEvents = async (attendedEventIds) => {
     try {
       const completedData = await fetchEvents('Completed');
       return completedData.map((event) => ({
         ...event,
-        earned_points: attendedE.includes(event.id) ? event.credit_points : 0,
+        earned_points: attendedEventIds.includes(event.id) ? event.credit_points : 0,
       }));
     } catch (error) {
       setError('Failed to fetch completed events. Please try again later.');
@@ -86,10 +87,10 @@ function EventListPage() {
     try {
       const openData = await fetchEvents('Open');
       setOpenEvents(openData);
-      const inProgressData = await fetchEvents('In Progress'); // Fetch in-progress events
+      const inProgressData = await fetchEvents('In Progress');
       setInProgressEvents(inProgressData);
-      const attendedData = await fetchAttendedEvents();
-      const completedData = await fetchCompletedEvents(attendedData);
+      const attendedEventIds = await fetchAttendedEvents();
+      const completedData = await fetchCompletedEvents(attendedEventIds);
       setCompletedEvents(completedData);
     } catch (error) {
       console.error('Error fetching data:', error);
@@ -99,6 +100,7 @@ function EventListPage() {
   };
 
   useEffect(() => {
+    setCurrentTab(parseInt(localStorage.getItem("currentEventTab")));
     const initializeData = async () => {
       try {
         const role = await fetchUserRole();
@@ -114,6 +116,7 @@ function EventListPage() {
 
   const handleChangeTab = (event, newValue) => {
     setCurrentTab(newValue);
+    localStorage.setItem('currentEventTab', newValue)
   };
 
   const handleRowClick = (id) => {
@@ -168,7 +171,7 @@ function EventListPage() {
         <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 2 }}>
           <Tabs value={currentTab} onChange={handleChangeTab}>
             <Tab label="Open Events" />
-            <Tab label="In Progress Events" /> {/* New tab */}
+            <Tab label="In Progress Events" />
             <Tab label="Completed Events" />
           </Tabs>
           <Button variant="contained" color="primary" onClick={handleCreateEvent} hidden={userRole === 'Volunteer'}>
@@ -184,9 +187,9 @@ function EventListPage() {
                 <TableCell sx={{ padding: '16px', fontWeight: 'bold' }}>Start Time</TableCell>
                 <TableCell sx={{ padding: '16px', fontWeight: 'bold' }}>Location</TableCell>
                 <TableCell sx={{ padding: '16px', fontWeight: 'bold' }}>Credit Points</TableCell>
-                {currentTab === 0 && userRole != 'Volunteer' && <TableCell sx={{ padding: '16px', fontWeight: 'bold' }}>Actions</TableCell>}
+                {currentTab === 0 && userRole !== 'Volunteer' && <TableCell sx={{ padding: '16px', fontWeight: 'bold' }}>Actions</TableCell>}
                 {currentTab === 1 && <TableCell sx={{ padding: '16px', fontWeight: 'bold' }}>Actions</TableCell>}
-                {currentTab === 2 && userRole != 'Admin' && <TableCell sx={{ padding: '16px', fontWeight: 'bold' }}>Earned Points</TableCell>}
+                {currentTab === 2 && userRole !== 'Admin' && <TableCell sx={{ padding: '16px', fontWeight: 'bold' }}>Earned Points</TableCell>}
               </TableRow>
             </TableHead>
             <TableBody>
@@ -209,7 +212,7 @@ function EventListPage() {
                   <TableCell>{new Date(event.start_datetime).toLocaleTimeString()}</TableCell>
                   <TableCell>{event.location}</TableCell>
                   <TableCell>{event.credit_points}</TableCell>
-                  {currentTab === 0 && userRole != 'Volunteer' && (
+                  {currentTab === 0 && userRole !== 'Volunteer' && (
                     <TableCell>
                       <IconButton
                         color="primary"
@@ -225,7 +228,7 @@ function EventListPage() {
                       </IconButton>
                     </TableCell>
                   )}
-                  {currentTab === 1 && userRole != 'Volunteer' && (
+                  {currentTab === 1 && userRole !== 'Volunteer' && (
                     <TableCell>
                       <IconButton
                         color="primary"
@@ -241,7 +244,7 @@ function EventListPage() {
                       </IconButton>
                     </TableCell>
                   )}
-                  {currentTab === 2 && userRole != "Admin" && <TableCell>{event.earned_points}</TableCell>}
+                  {currentTab === 2 && userRole !== 'Admin' && <TableCell>{event.earned_points}</TableCell>}
                 </TableRow>
               ))}
             </TableBody>

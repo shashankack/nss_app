@@ -80,12 +80,19 @@ const ResetPassword = () => {
                     {error && (
                         <FormHelperText error>{error}</FormHelperText>
                     )}
-                    <Box mt={2}>
+                    <Box mt={2} sx={{ display: 'flex', justifyContent: 'space-between'}}>
+                        <Button
+                            onClick={() => nav(-1)}
+                            type="submit"
+                            variant="outlined"
+                            color="error"
+                        >
+                            Cancel
+                        </Button>
                         <Button
                             type="submit"
-                            variant="contained"
+                            variant="outlined"
                             color="primary"
-                            fullWidth
                         >
                             Reset Password
                         </Button>

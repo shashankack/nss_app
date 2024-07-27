@@ -130,12 +130,14 @@ class AttendanceAPIView(APIView):
     
 class EventsAttendedAPIView(APIView):
     permission_classes = [IsAuthenticated]
-
+    #This should display the details of the events too
     def get(self, request):
-        events = list(Attendance.objects.filter(volunteer__user_id=request.user.id,
+        events = Attendance.objects.filter(volunteer__user_id=request.user.id,
                                             volunteer__volunteering_year=NSSYear.current_year(),
-                                            ).select_related('event').values_list('event__id', flat=True))
-        return Response(events, status=status.HTTP_200_OK)
+                                            ).select_related('event')
+        serializer = EventSerializer([event.event for event in events], many=True)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+    
 
 
     

@@ -2,7 +2,6 @@ import React from 'react';
 import { BrowserRouter as Router } from 'react-router-dom';
 import { ThemeProvider, createTheme, CssBaseline } from '@mui/material';
 import Navbar from './components/Navbar';
-import SideNavbar from './components/SideNavbar';
 import Routes from './Routes';
 
 const theme = createTheme({

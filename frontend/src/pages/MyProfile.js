@@ -1,41 +1,19 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import {
-  Box,
-  Button,
-  Avatar,
-  Typography,
-  Grid,
-  Paper,
-  CircularProgress,
-  Card,
-  CardHeader,
-  Divider,
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogActions,
-  List,
-  ListItem,
-  ListItemText,
+import { Box, Button, Avatar, Typography, Grid, Paper, CircularProgress, Card, CardHeader,
+  Divider, Dialog, DialogTitle, DialogContent, DialogActions, List, ListItem, CardContent,
+  CardActionArea, Chip
 } from '@mui/material';
 import { EmojiEvents, School } from '@mui/icons-material';
 import api from '../utils/api';
 
 const MyProfile = () => {
-  const [mouseX, setMouseX] = useState(0);
-  const [mouseY, setMouseY] = useState(0);
   const [openEventsDialog, setOpenEventsDialog] = useState(false);
   const [attendedEvents, setAttendedEvents] = useState([]);
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
 
-  const handleMouseMove = (event) => {
-    const rect = event.currentTarget.getBoundingClientRect();
-    setMouseX(event.clientX - rect.left);
-    setMouseY(event.clientY - rect.top);
-  };
 
   const getInitials = (firstName, lastName) => {
     return `${firstName[0]}${lastName[0]}`;
@@ -49,6 +27,11 @@ const MyProfile = () => {
     } else {
       return null;
     }
+  };
+
+  //Funtction to handle card click, which will go to that event details page
+  const handleCardClick = (eventId) => {
+    navigate(`/event/${eventId}`);
   };
 
   useEffect(() => {
@@ -162,23 +145,14 @@ const MyProfile = () => {
           </Grid>
           <Grid item xs={12}>
             <Box sx={{ display: 'flex', justifyContent: 'space-between', mt: 2 }}>
-              
+            <Button
+                variant="outlined"
+                color="primary"
+                onClick={() => navigate(-1)}
+              >
+                Back
+              </Button>
               <Button
-                sx={{
-                  position: 'relative',
-                  overflow: 'hidden',
-                  '&:hover::before': {
-                    content: '""',
-                    position: 'absolute',
-                    top: 0,
-                    left: 0,
-                    width: '100%',
-                    height: '100%',
-                    background: `radial-gradient(circle at ${mouseX}px ${mouseY}px, rgba(255, 0, 0, 0.6), transparent)`,
-                    pointerEvents: 'none',
-                  },
-                }}
-                onMouseMove={handleMouseMove}
                 variant="outlined"
                 color="error"
                 onClick={handleResetPassword}
@@ -190,22 +164,30 @@ const MyProfile = () => {
         </Grid>
       </Paper>
       <Dialog open={openEventsDialog} onClose={handleCloseEventsDialog} fullWidth maxWidth="sm">
-        <DialogTitle sx={{ textDecoration: 'underline' }} >Events Attended</DialogTitle>
+        <DialogTitle sx={{ textDecoration: 'underline' }}>Events Attended</DialogTitle>
         <DialogContent>
           <List>
             {attendedEvents.length > 0 ? (
               attendedEvents.map((event, index) => (
-                <ListItem key={index} disablePadding>
-                  <ListItemText
-                    primary={event.name}
-                    secondary={
-                      <>
-                        <Typography variant="body2" color="textSecondary">
-                          {new Date(event.date).toLocaleDateString()} - Credits: {event.credits}
-                        </Typography>
-                      </>
-                    }
-                  />
+                <ListItem key={index} disablePadding sx={{ marginBottom: 2 }}>
+                  <Card variant="outlined" sx={{ width: '100%' }}>
+                  <CardActionArea onClick={() => handleCardClick(event.id)}>
+                    <CardContent>
+                    <Box display="flex" justifyContent="space-between" alignItems="center">
+                          <Typography variant="h6" component="div" sx={{ fontWeight: 'bold' }}>
+                            {event.name}
+                          </Typography>
+                          <Chip label={event.status} color="success" />
+                        </Box>
+                      <Typography variant="body2" color="textSecondary" sx={{ marginTop: 1 }}>
+                        Date: {new Date(event.start_datetime).toLocaleDateString()}
+                      </Typography>
+                      <Typography variant="body2" color="textSecondary">
+                        Credits: {event.credit_points}
+                      </Typography>
+                    </CardContent>
+                  </CardActionArea>
+                  </Card>
                 </ListItem>
               ))
             ) : (

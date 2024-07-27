@@ -1,210 +1,379 @@
-import React, {useEffect, useState} from 'react'
+import React, { useState, useEffect } from 'react';
+import { useParams } from 'react-router-dom';
+import {
+  Container,
+  Typography,
+  Button,
+  Box,
+  Avatar,
+  TextField,
+  Paper,
+  Modal,
+  Checkbox,
+  FormControlLabel,
+} from '@mui/material';
 import api from '../utils/api';
-import { Tabs, Tab, Table, TableContainer, TableHead, TableBody, TableRow, TableCell, Paper, Button, Box, Dialog, DialogTitle, DialogContent, DialogActions, DialogContentText } from '@mui/material';
-import EditEventDialog from './EditEventDialog';
+import ImageCarousel from '../components/ImageCarousel';
+import { format } from 'date-fns';
+import { useNavigate } from 'react-router-dom';
 
-function EventListPage() {
-  // call API to get all events
-  const [events, setEvents] = useState([]);
-  const [attendedEvents, setAttendedEvents] = useState([]);
-  const [userRole, setUserRole] = useState('');
-  const [openEvents, setOpenEvents] = useState([]);
-  const [completedEvents, setCompletedEvents] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [currentTab, setCurrentTab] = useState(0);
-  const [editDialogOpen, setEditDialogOpen] = useState(false);
-  const [deleteDialog, setDeleteDialog] = useState(false);
-  const [selectedEvent, setSelectedEvent] = useState(null);
+const EventDetails = () => {
+  const { id } = useParams();
+  const [event, setEvent] = useState(null);
+  const [status, setStatus] = useState('');
+  const [comments, setComments] = useState([]);
+  const [newComment, setNewComment] = useState('');
+  const [attendedVolunteers, setAttendedVolunteers] = useState([]);
+  const [volunteers, setVolunteers] = useState([]);
+  const [open, setOpen] = useState(false);
+  const [selectedVolunteers, setSelectedVolunteers] = useState([]);
+  const [search, setSearch] = useState('');
+  const nav = useNavigate();
 
-  const fetchUserRole = async () => {
-    const response = await api.get('/loggedinuser/');
-    return response.data.role;
-  };
-
-  const fetchEvents = async (status) => {
-    return await api.get(`/event?status=${status}`);
-  };
-  
-  const fetchAttendedEvents = async () => {
-    return await api.get('/volunteer/eventsAttended');
-  };
-
-  const fetchCompletedEvents = async (attendedE) => {
-    const completedData = await fetchEvents('Completed');
-    return completedData.data.map((event) => ({
-      ...event,
-      earned_points: attendedE.includes(event.id) ? event.credit_points : 0,
-    }));
-  };
-
-
-  const fetchData = async () => {
+  const fetchAttendedVolunteers = async () => {
     try {
-      const openData = await fetchEvents('Open');
-      setOpenEvents(openData.data);
-      const attendedData = await fetchAttendedEvents();
-      setAttendedEvents(attendedData.data);
-      const completedData = await fetchCompletedEvents(attendedData.data);
-      setCompletedEvents(completedData);
-      console.log('Open', openEvents);
-      console.log('Completed', completedEvents);
+      const response = await api.get(`/event/${id}/attended-volunteers/`);
+      setAttendedVolunteers(response.data);
     } catch (error) {
-      console.error('Failed to fetch events:', error);
-    } finally {
-      setLoading(false);
+      console.error("Failed to fetch attended volunteers:", error);
+    }
+  };
+
+  const goBack = () => {
+    nav(-1);
+  }
+
+  const fetchVolunteers = async () => {
+    try {
+      const response = await api.get(`/volunteers/?event_id=${id}`);
+      setVolunteers(response.data);
+    } catch (error) {
+      console.error("Failed to fetch volunteers:", error);
     }
   };
 
   useEffect(() => {
-    const initializeData = async () => {
+    const fetchEventDetails = async () => {
       try {
-        const role = await fetchUserRole();
-        setUserRole(role);
-        fetchData();
+        const response = await api.get(`/event/${id}/`);
+        setEvent(response.data);
+        setStatus(response.data.status);
       } catch (error) {
-        console.error('Failed to fetch user role:', error);
+        console.error('Failed to fetch event details:', error);
       }
     };
 
-    initializeData();
-  }, []);
+    const fetchComments = async () => {
+      try {
+        const response = await api.get(`/event/${id}/event-forum/`);
+        setComments(response.data);
+      } catch (error) {
+        console.error("Failed to fetch comments", error);
+      }
+    };
 
-  const handleChangeTab = (event, newValue) => {
-    setCurrentTab(newValue);
-};
+    fetchEventDetails();
+    fetchComments();
+    fetchAttendedVolunteers();
+    fetchVolunteers();
+  }, [id]);
 
-const handleEditEvent = (event) => {
-    setSelectedEvent(event);
-    setEditDialogOpen(true);
-};
-
-const handleCreateEvent = () => {
-    setSelectedEvent(null);
-    setEditDialogOpen(true);
-};
-
-const handleDeleteEvent = (event) => {
-  setSelectedEvent(event);
-  setDeleteDialog(true);
-};
-
-const handleCloseDialog = () => {
-    setSelectedEvent(null);
-    setEditDialogOpen(false);
-};
-
-const handleCloseDeleteDialog = () => {
-  setSelectedEvent(null);
-  setDeleteDialog(false)
-};
-
-const handleConfirmDelete = async () => {
-  if (selectedEvent && selectedEvent.id) {
+  const handleStatusChange = async () => {
     try {
-      await api.delete(`/event/${selectedEvent.id}/`);
-      setOpenEvents(openEvents.filter((event) => event.id !== selectedEvent.id));
-      console.log('Event deleted successfully');
+      let newStatus;
+      if (status === 'Open') {
+        newStatus = 'In Progress';
+      } else if (status === 'In Progress') {
+        newStatus = 'Completed';
+      }
+
+      const response = await api.put(`/event/${id}/`, { status: newStatus });
+      setStatus(response.data.status);
     } catch (error) {
-      console.error('Failed to delete event:', error);
-    } finally {
-      handleCloseDeleteDialog();
+      console.error('Failed to update status:', error);
     }
+  };
+
+  const handleCommentSubmit = async (event) => {
+    if (event.key === 'Enter' && newComment) {
+      try {
+        const response = await api.post(`/event/${id}/event-forum/`, { comment: newComment });
+        setComments([...comments, response.data]);
+        setNewComment('');
+      } catch (error) {
+        console.error('Failed to submit comment:', error);
+      }
+    }
+  };
+
+  const handleOpen = () => setOpen(true);
+  const handleClose = () => setOpen(false);
+
+  const handleVolunteerSelect = (volunteerId) => {
+    setSelectedVolunteers((prevSelected) =>
+      prevSelected.includes(volunteerId)
+        ? prevSelected.filter((id) => id !== volunteerId)
+        : [...prevSelected, volunteerId]
+    );
+  };
+
+  const handleSubmitAttendance = async () => {
+    try {
+      await api.post(`/event/${id}/mark-attendance/`, { volunteer_ids: selectedVolunteers });
+      setOpen(false);
+      setSelectedVolunteers([]);
+      fetchAttendedVolunteers();
+      fetchVolunteers();
+    } catch (error) {
+      console.error('Failed to mark attendance:', error);
+    }
+  };
+
+  const attendedVolunteerIds = new Set(attendedVolunteers.map(v => v.id));
+  const filteredVolunteers = volunteers.filter((volunteer) =>
+    (volunteer.first_name.toLowerCase().includes(search.toLowerCase()) ||
+     volunteer.last_name.toLowerCase().includes(search.toLowerCase())) &&
+    !attendedVolunteerIds.has(volunteer.id) // Exclude attended volunteers
+  );
+
+  const groupCommentsByDate = (comments) => {
+    return comments.reduce((groups, comment) => {
+      const date = new Date(comment.created_at).toLocaleDateString();
+      if (!groups[date]) {
+        groups[date] = [];
+      }
+      groups[date].push(comment);
+      return groups;
+    }, {});
+  };
+
+  const userDetails = JSON.parse(localStorage.getItem('userDetails'));
+  const groupedComments = groupCommentsByDate(comments);
+
+  if (!event) {
+    return <Typography variant="h6">Loading...</Typography>;
   }
-};
 
-const renderTableColumns = () => {
-    let columns = [
-        { id: 'name', label: 'Name' },
-        { id: 'start_date', label: 'Start Date' },
-        { id: 'start_time', label: 'Start Time' },
-        { id: 'location', label: 'Location' },
-        { id: 'credit_points', label: 'Credit Points' }
-    ];
-
-    if (currentTab === 0 && userRole === 'Leader') {
-        columns.push({ id: 'actions', label: 'Actions' });
-    } else if (currentTab === 1) {
-        columns.push({ id: 'earned_points', label: 'Earned Points' });
-    }
-
-    return columns;
-};
-  
   return (
-    <div>
-        <div>
-            <Box sx={{ display: 'grid', gridTemplateRows: 'auto auto', gap: '10px', marginBottom: '10px' }}>
-                <Box sx={{ display: 'flex', justifyContent: 'flex-end' }}>
-                    {userRole === 'Leader' && (
-                        <Button variant="contained" color="primary" onClick={handleCreateEvent}>
-                            Create Event
-                        </Button>
-                    )}
-                </Box>
-                <Box>
-                    <Tabs value={currentTab} onChange={handleChangeTab}>
-                        <Tab label="Open Events" />
-                        <Tab label="Completed Events" />
-                    </Tabs>
-                </Box>
+    <Container
+      style={{ maxWidth: '1390px' }}
+      sx={{ backgroundColor: '#f5f5f5', padding: 3, borderRadius: 2, ml: 5, mt: 5, boxShadow: 10 }}>
+      <Box sx={{ marginBottom: 2 }}>
+        <Typography variant="h4" sx={{ lineHeight: '1.2' }}>
+          {event.name}
+        </Typography>
+        <Box display="flex" justifyContent="space-between" sx={{ marginTop: 1 }}>
+          <Typography variant="subtitle1" color="primary">
+            Credit Points: {event.credit_points} | Status: {status}
+          </Typography>
+          <Button
+              sx={{ ml: 210 }}
+              variant="contained"
+              onClick={goBack}
+              
+            >
+              Go Back
+            </Button>
+          {userDetails.role != 'Volunteer' && (
+            <Button
+              variant="contained"
+              onClick={handleStatusChange}
+              disabled={status === 'Completed'}
+            >
+              {status === 'Open' ? 'Start Event' : status === 'In Progress' ? 'End Event' : 'Event Ended'}
+            </Button>
+          )}
+        </Box>
+      </Box>
+      {/* Row 3: Compact Schedule */}
+      <Box sx={{ marginBottom: 2 }}>
+        <Typography variant="h5" gutterBottom>
+          Schedule
+        </Typography>
+        <Typography variant="body2" color="text.secondary">
+          <strong>Location:</strong> {event.location} | <strong>Date/Time:</strong> {new Date(event.start_datetime).toLocaleString()} | <strong>Duration:</strong> {event.duration}
+        </Typography>
+      </Box>
+
+      {/* Row 2: Description */}
+      <Box sx={{ marginBottom: 2 }}>
+        <Typography variant="h5" gutterBottom>
+          Description
+        </Typography>
+        <div dangerouslySetInnerHTML={{ __html: event.description }} />
+      </Box>
+
+      <Box sx={{ marginBottom: 2 }}>
+        <Typography variant="h5" gutterBottom>
+        Instructions to Volunteers
+        </Typography>
+        <div dangerouslySetInnerHTML={{ __html: event.instructions }} />
+      </Box>
+
+      <ImageCarousel></ImageCarousel>
+      {/* Divider */}
+      <Box sx={{ borderTop: '1px solid #ccc', marginBottom: 2 }} />
+
+      {/* Row 6: Comments Widget */}
+      <Box
+        sx={{
+          position: 'fixed',
+          bottom: 20,
+          right: 35,
+          width: 450,
+          height: 340,
+          border: '1px solid #ccc',
+          borderRadius: 2,
+          padding: 1,
+          backgroundColor: '#fff',
+          boxShadow: 10,
+        }}
+      >
+        <Typography variant="h6" gutterBottom>
+          Event Discussion Forum
+        </Typography>
+        <Box sx={{ height: '70%', overflowY: 'auto', padding: 1 }}>
+          {Object.keys(groupedComments).map(date => (
+            <Box key={date} sx={{ marginBottom: 2 }}>
+              <Typography sx={{ textAlign: 'center' }}>{date}</Typography>
+              {groupedComments[date].map(comment => (
+                <Paper elevation={2} key={comment.id} sx={{ padding: 2, marginBottom: 2 }}>
+                  <Box sx={{ display: 'flex', alignItems: 'center', marginBottom: 1 }}>
+                    <Avatar sx={{ marginRight: 2, bgcolor: 'primary.main' }}>{comment.first_name[0]}</Avatar>
+                    <Typography variant="body2" sx={{ fontWeight: 'bold' }}>
+                      {comment.first_name} {comment.last_name}
+                    </Typography>
+                  </Box>
+                  <Typography variant="body2">{comment.comment}</Typography>
+                  <Typography variant="caption" color="text.secondary" sx={{ ml: 80 }}>
+                    {format(new Date(comment.created_at), 'hh:mm a')}
+                  </Typography>
+                </Paper>
+              ))}
             </Box>
-            <TableContainer component={Paper}>
-                <Table>
-                    <TableHead>
-                        <TableRow>
-                            <TableCell>Name</TableCell>
-                            <TableCell>Start Date</TableCell>
-                            <TableCell>Start Time</TableCell>
-                            <TableCell>Location</TableCell>
-                            <TableCell>Credit Points</TableCell>
-                            {currentTab === 0 && userRole === 'Leader' && <TableCell>Actions</TableCell>}
-                            {currentTab === 1 && <TableCell>Earned Points</TableCell>}
-                        </TableRow>
-                    </TableHead>
-                    <TableBody>
-                        {(currentTab === 0 ? openEvents : completedEvents).map(event => (
-                            <TableRow key={event.id}>
-                                <TableCell>{event.name}</TableCell>
-                                <TableCell>{new Date(event.start_datetime).toLocaleDateString()}</TableCell>
-                                <TableCell>{new Date(event.start_datetime).toLocaleTimeString()}</TableCell>
-                                <TableCell>{event.location}</TableCell>
-                                <TableCell>{event.credit_points}</TableCell>
-                                {currentTab === 0 && userRole === 'Leader' && (
-                                    <TableCell>
-                                        <Button variant="contained" style={{padding:2, margin:5}} color="primary" onClick={() => handleEditEvent(event)}>Edit</Button>
-                                        <Button variant="contained" style={{padding:2, margin:5}} color="error" onClick={() => handleDeleteEvent(event)}>Delete</Button>
-                                    </TableCell>
-                                )}
-                                {currentTab === 1 && <TableCell>{event.earned_points}</TableCell>}
-                            </TableRow>
-                        ))}
-                    </TableBody>
-                </Table>
-            </TableContainer>
-            <EditEventDialog
-                open={editDialogOpen}
-                onClose={handleCloseDialog}
-                event={selectedEvent}
-                fetchData={fetchData}
-            />
-                  {/* Delete Event Dialog */}
-        <Dialog open={deleteDialog} onClose={handleCloseDeleteDialog}>
-          <DialogTitle>Delete Event</DialogTitle>
-          <DialogContent>
-            <DialogContentText>
-              Are you sure you want to delete this event?
-            </DialogContentText>
-          </DialogContent>
-          <DialogActions>
-            <Button onClick={handleCloseDeleteDialog}>Cancel</Button>
-            <Button onClick={handleConfirmDelete} color="error">Delete</Button>
-          </DialogActions>
-        </Dialog>
-        </div>
+          ))}
+        </Box>
+        { event.status != "Completed" && <TextField
+          autoComplete="off"
+          label="Add a comment"
+          variant="outlined"
+          value={newComment}
+          onChange={(e) => setNewComment(e.target.value)}
+          onKeyPress={handleCommentSubmit}
+          fullWidth
+        />}
+      </Box>
 
+      <Box
+        sx={{
+          position: 'fixed',
+          bottom: 400,
+          right: 35,
+          width: 450,
+          height: 475,
+          border: '1px solid #ccc',
+          borderRadius: 2,
+          padding: 1,
+          backgroundColor: '#fff',
+          boxShadow: 10,
+        }}
+      >
+        <Typography variant="h5" gutterBottom>
+          Attended Volunteers
+        </Typography>
+        
+        <Box sx={{ height: '70%', overflowY: 'auto', padding: 5 }}>
+          {attendedVolunteers.length === 0 ? (
+            <Typography>Attendance is not marked yet.</Typography>
+          ) : (
+            attendedVolunteers.map((volunteer) => (
+              <Paper
+                key={volunteer.id}
+                sx={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  padding: 1,
+                  marginBottom: 2,
+                  borderRadius: 1,
+                  boxShadow: 3,
+                  transition: '0.5s',
+                  '&:hover': {
+                    boxShadow: 5,
+                  },
+                }}
+              >
+                <Avatar sx={{ marginRight: 2, bgcolor: 'primary.main' }}>
+                  {volunteer.first_name[0]}
+                </Avatar>
+                <Box>
+                  <Typography variant="body1" sx={{ fontWeight: 'bold' }}>
+                    {volunteer.first_name} {volunteer.last_name}
+                  </Typography>
+                  <Typography variant="body2" color="text.secondary">
+                    Role: {volunteer.role}
+                  </Typography>
+                </Box>
+              </Paper>
+            ))
+          )}
+        </Box>
+        <Box sx={{ ml: 65, mt: 12 }}>
+          {status === 'In Progress' && userDetails.role != 'Volunteer' ? (
+            <Button variant="contained" onClick={handleOpen} disabled={false}>
+              Mark Attendance
+            </Button>
+          ) : (
+            <Button variant="contained" disabled>
+              Mark Attendance
+            </Button>
+          )}
+        </Box>
+      </Box>
+      <Modal open={open} onClose={handleClose}>
+        <Box sx={{ 
+          bgcolor: 'background.paper', 
+          boxShadow: 24, 
+          p: 4, 
+          borderRadius: 2, 
+          width: 400,
+          position: 'absolute',
+          top: '50%',
+          left: '50%',
+          transform: 'translate(-50%, -50%)'
+        }}>
+          <Typography variant="h6" gutterBottom>
+            Mark Attendance
+          </Typography>
+          <TextField
+            label="Search Volunteers"
+            variant="outlined"
+            fullWidth
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            sx={{ marginBottom: 2 }}
+          />
+          <Box sx={{ maxHeight: 300, overflowY: 'auto' }}>
+            {filteredVolunteers.map((volunteer) => (
+              <FormControlLabel
+                key={volunteer.id}
+                control={
+                  <Checkbox
+                    checked={selectedVolunteers.includes(volunteer.id)}
+                    onChange={() => handleVolunteerSelect(volunteer.id)}
+                  />
+                }
+                label={`${volunteer.first_name} ${volunteer.last_name} (${volunteer.role})`}
+              />
+            ))}
+          </Box>
+          <Box sx={{ display: 'flex', justifyContent: 'flex-end', marginTop: 2 }}>
+            <Button onClick={handleClose} sx={{ marginRight: 1 }}>Cancel</Button>
+            <Button variant="contained" onClick={handleSubmitAttendance}>Submit</Button>
+          </Box>
+        </Box>
+      </Modal>
+    </Container>
+  );
+};
 
-</div>
-  )
-}
-
-export default EventListPage
+export default EventDetails;

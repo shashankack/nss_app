@@ -240,16 +240,24 @@ class ManageVolunteerAPIView(APIView): #College Admin
         return Response("Volunteer has been deleted", status=status.HTTP_204_NO_CONTENT)
         
 
-    def put(self, request, pk):
-        volunteer = Volunteer.objects.filter(pk=pk).first()
+    def put(self, request, volunteer_id):
+        volunteer = Volunteer.objects.filter(pk=volunteer_id).first()
         if not volunteer:
             return Response("Volunteer not exist", status=status.HTTP_404_NOT_FOUND)
+        user = volunteer.user
+        user.first_name = request.data['user']['first_name']
+        user.last_name = request.data['user']['last_name']
+        user.email = request.data['user']['email']
+        user.blood_group = request.data['user']['blood_group']
+        user.gender = request.data['user']['gender']
+        user.save()
         
-        serializer = VolunteerSerializer(volunteer, data=request.data, partial=True)
-        if serializer.is_valid():
-            serializer.save()
-            return Response(serializer.data, status=status.HTTP_200_OK)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        volunteer.course_id = request.data['course']
+        volunteer.role = request.data['role']
+        volunteer.course_year = request.data['course_year']
+        volunteer.save()
+        
+        return Response('Updated Successfully', status=status.HTTP_200_OK)
 
     
 class CollegeAPIView(APIView):
