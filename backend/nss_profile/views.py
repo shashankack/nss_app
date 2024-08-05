@@ -99,6 +99,8 @@ class UploadVolunteersAPIView(APIView):
                     serializer = UserSerializer(data=user_object)
                     if serializer.is_valid():
                         user = serializer.save()
+                        user.set_password('resetme')
+                        user.save()
                     else:
                         errors.append({"user_data": user_data, "errors": serializer.errors})
                         continue
@@ -246,6 +248,7 @@ class ManageVolunteerAPIView(APIView): #College Admin
             return Response("Volunteer not exist", status=status.HTTP_404_NOT_FOUND)
         user = volunteer.user
         user.first_name = request.data['user']['first_name']
+        user.username = request.data['user']['username']
         user.last_name = request.data['user']['last_name']
         user.email = request.data['user']['email']
         user.blood_group = request.data['user']['blood_group']

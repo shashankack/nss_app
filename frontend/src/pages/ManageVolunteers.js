@@ -11,6 +11,7 @@ import { useNavigate } from 'react-router-dom';
 import EditVolunteerDialog from '../components/EditVolunteerDialog';
 import Zoom from '@mui/material/Zoom';
 import SearchIcon from '@mui/icons-material/Search';
+import Papa from 'papaparse'; 
 
 const ManageVolunteers = () => {
   const [volunteers, setVolunteers] = useState([]);
@@ -28,75 +29,79 @@ const ManageVolunteers = () => {
 
   const handleFileUpload = (event) => {
     const file = event.target.files[0];
-    const reader = new FileReader();
-
-    reader.onload = (e) => {
-      const csv = e.target.result;
-      const lines = csv.split('\n');
-      const headers = lines[0].split(',');
-
-      const jsonData = [];
-
-      for (let i = 1; i < lines.length; i++) {
-        const data = lines[i].split(',');
-        if (data.length === headers.length) {
-
-          let obj = {};
-          let user_id = data[0].trim();
-          if (user_id) {
-            obj['user'] = user_id;
+    if (!file) return;
+  
+    Papa.parse(file, {
+      header: false,
+      skipEmptyLines: true,
+      complete: (result) => {
+        const lines = result.data;
+        if (lines.length === 0) return;
+  
+        const headers = lines[0];
+        const jsonData = [];
+  
+        for (let i = 1; i < lines.length; i++) {
+          const data = lines[i];
+          if (data.length === headers.length) {
+            let obj = {};
+            let user_id = data[0]?.trim();
+            
+            if (user_id) {
+              obj['user'] = user_id;
+            } else {
+              obj['user'] = {
+                "username": data[1]?.trim(),
+                "first_name": data[2]?.trim(),
+                "last_name": data[3]?.trim(),
+                "email": data[4]?.trim(),
+                "blood_group": data[5]?.trim(),
+                "gender": data[6]?.trim()
+              };
+            }
+  
+            obj['course'] = data[7]?.trim();
+            obj['course_year'] = data[8]?.trim();
+            obj['role'] = data[9]?.trim();
+            jsonData.push(obj);
           }
-          else {
-            obj['user'] = {
-              "username": data[1].trim(),
-              "first_name": data[2].trim(),
-              "last_name": data[3].trim(),
-              "email": data[4].trim(),
-              "blood_group": data[5].trim(),
-              "gender": data[6].trim()
-            };
-          }
-          obj['course'] = data[7].trim();
-          obj['course_year'] = data[8].trim();
-          obj['role'] = data[9].trim();
-          jsonData.push(obj);
         }
+  
+        api.post('/admin/volunteers/upload/', jsonData)
+          .then((response) => {
+            setVolunteerPopupdata(response.data);
+            setUploadPopupOpen(true);
+          })
+          .catch((error) => {
+            console.error("Error uploading data:", error);
+          });
+      },
+      error: (error) => {
+        console.error("Error reading file:", error);
       }
-
-      api.post('/admin/volunteers/upload/', jsonData)
-        .then((response) => {
-          setVolunteerPopupdata(response.data);
-          setUploadPopupOpen(true);
-
-        })
-        .catch((error) => {
-          console.error();
-        });
-    };
-
-    reader.readAsText(file);
+    });
   };
-
+  
   const fetchVolunteers = () => {
     api.get('/admin/volunteers/')
       .then((response) => {
         setVolunteers(response.data);
         setFilteredVolunteers(response.data);
       })
-      .catch(() => {
-        console.error();
+      .catch((error) => {
+        console.error("Error fetching volunteers:", error);
       });
   };
-
+  
   useEffect(() => {
     fetchVolunteers();
-
+  
     api.get('admin/college-courses/')
       .then((response) => {
         setCourses(response.data);
       })
-      .catch(() => {
-        // Handle error
+      .catch((error) => {
+        console.error("Error fetching courses:", error);
       });
   }, []);
 
@@ -105,6 +110,8 @@ const ManageVolunteers = () => {
       const filtered = volunteers.filter(volunteer =>
         volunteer.first_name.toLowerCase().includes(searchQuery.toLowerCase()) ||
         volunteer.last_name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        volunteer.email.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        volunteer.username.includes(searchQuery) ||
         volunteer.role.toLowerCase().includes(searchQuery.toLowerCase())
       );
       setFilteredVolunteers(filtered);
@@ -185,7 +192,7 @@ const ManageVolunteers = () => {
       });
     } else {
       console.log("Create Volunteer");
-      obj['user']['password'] = 'pleaseresetme';
+      obj['user']['password'] = 'resetme';
       api.post('/admin/volunteers/', obj)
       .then((response) => {
         setVolunteers([...volunteers, response.data]);
@@ -252,7 +259,7 @@ const ManageVolunteers = () => {
           component={Paper}
           elevation={24}
           sx={{
-            maxHeight: 500,
+            maxHeight: 400,
             overflowY: 'auto', '&::-webkit-scrollbar': { display: 'none' },
           }}>
           <Table stickyHeader>
@@ -339,7 +346,7 @@ const ManageVolunteers = () => {
         </DialogActions>
       </Dialog>
 
-      <VolunteerUploadPopup open={uploadPopupOpen} onClose={closeUploadPopup} data={volunteerPopupdata} />
+      <VolunteerUploadPopup open={uploadPopupOpen} handleClose={closeUploadPopup} data={volunteerPopupdata} />
     </Box>
   );
 };
